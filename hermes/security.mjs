@@ -15,11 +15,17 @@ function windowsPowerShell() {
   return join(root, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
 }
 
+// Windows PowerShell 5.1 must build its own module path. Started from PowerShell 7, the
+// inherited PSModulePath lists PowerShell 7 modules first and Get-Acl then fails to load.
+export function windowsSecurityEnvironment(env = process.env) {
+  return Object.fromEntries(Object.entries(env).filter(([key]) => key.toLowerCase() !== 'psmodulepath'));
+}
+
 function runWindowsSecurity(operation, pathname) {
   const result = spawnSync(windowsPowerShell(), [
     '-NoLogo', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
     '-File', WINDOWS_SECURITY, operation, resolve(pathname),
-  ], { encoding: 'utf8', windowsHide: true, maxBuffer: 1024 * 1024 });
+  ], { encoding: 'utf8', windowsHide: true, maxBuffer: 1024 * 1024, env: windowsSecurityEnvironment() });
   if (result.error || result.status !== 0) {
     const combined = `${result.stderr || ''}\n${result.stdout || ''}`;
     const detail = combined.match(/Windows private-path security check failed: ([^\r\n]+)/)?.[1];

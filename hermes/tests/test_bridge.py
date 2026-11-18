@@ -77,3 +77,19 @@ def test_bridge_rejects_insecure_existing_channel_directory(tmp_path):
         mod.Bridge(Context(),directory,'profile-a')
     assert directory.stat().st_mode & 0o777 == 0o777
     assert not list(directory.glob('*.key'))
+
+def test_windows_security_helper_drops_inherited_powershell_module_path(monkeypatch, tmp_path):
+    # Launched from PowerShell 7, PSModulePath lists PowerShell 7 modules first and
+    # Windows PowerShell 5.1 then fails to load Get-Acl from Microsoft.PowerShell.Security.
+    bridge=module()
+    monkeypatch.setenv('PSModulePath', r'C:\Program Files\PowerShell\7\Modules')
+    captured={}
+    class Result:
+        returncode=0;stdout=b'';stderr=b''
+    def fake_run(command, **kwargs):
+        captured.update(kwargs);return Result()
+    monkeypatch.setattr(bridge.subprocess, 'run', fake_run)
+    bridge._run_windows_security('verify-directory', tmp_path)
+    assert 'env' in captured
+    assert [key for key in captured['env'] if key.lower()=='psmodulepath']==[]
+    assert captured['env'].get('PATH')==os.environ.get('PATH')

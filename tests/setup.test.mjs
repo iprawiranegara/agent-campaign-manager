@@ -65,6 +65,29 @@ test('Hermes preparation generates an untrusted hidden router and profile-specif
   assert.equal(JSON.parse(probe.stdout).result.tools.length,14);
 }));
 
+test('Hermes router accepts the production ledger when it is reached through a symlinked path', { skip: process.platform === 'win32' && 'symlink creation needs extra privileges on Windows' }, async () => fixture(async dir => {
+  // macOS temp and home paths often pass through /tmp, /var or a linked XDG directory.
+  const state=join(dir,'state');assert.equal(run(['init','--state-dir',state]).status,0);
+  const profile=join(dir,'hermes-home');const out=join(dir,'hermes-install');
+  assert.equal(run(['hermes','--state-dir',state,'--hermes-home',profile,'--output',out]).status,0);
+  const server=(await json(join(out,'config.fragment.json'))).mcp_servers['campaign-router'];
+  const alias=join(dir,'state-alias');(await import('node:fs')).symlinkSync(state,alias,'dir');
+  const args=server.args.map(value=>value===state?alias:value);
+  assert.ok(args.includes(alias),'router arguments should name the state directory');
+  const probe=spawnSync(server.command,args,{cwd:server.cwd,env:{...process.env,...server.env,CODEX_RESEARCH_CAMPAIGN_STATE_DIR:alias},input:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/list'})+'\n',encoding:'utf8'});
+  assert.equal(probe.status,0,probe.stderr);
+  assert.equal(JSON.parse(probe.stdout).result.tools.length,14);
+}));
+
+test('Windows security checks start PowerShell without the parent PSModulePath', async () => {
+  // PowerShell 7 puts its own modules first; Windows PowerShell 5.1 then cannot load Get-Acl.
+  const { windowsSecurityEnvironment } = await import('../hermes/security.mjs');
+  const env = windowsSecurityEnvironment({ Path: 'C:\\Windows\\System32', PSModulePath: 'C:\\Program Files\\PowerShell\\7\\Modules', psmodulepath: 'duplicate', SystemRoot: 'C:\\Windows' });
+  assert.deepEqual(Object.keys(env).filter(key => key.toLowerCase() === 'psmodulepath'), []);
+  assert.equal(env.Path, 'C:\\Windows\\System32');
+  assert.equal(env.SystemRoot, 'C:\\Windows');
+});
+
 test('Hermes native Windows preparation uses LOCALAPPDATA profile unless HERMES_HOME overrides it', async () => {
   const { resolveHermesHome } = await import('../scripts/paths.mjs');
   assert.equal(resolveHermesHome({ platform: 'win32', home: 'C:\\Users\\tester', env: {

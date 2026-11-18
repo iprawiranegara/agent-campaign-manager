@@ -93,7 +93,8 @@ test('PowerShell installer verifies a local SHA-256 and uses npm.cmd without inv
       '-File', join(root, 'install', 'install.ps1'), '-Source', archive, '-Sha256', sha,
     ], {
       encoding: 'utf8',
-      env: { ...process.env, LOCALAPPDATA: dir, NPM_ARGS: npmArgs, PATH: `${dir};${process.env.PATH}` },
+      // Drop a PowerShell 7 parent's PSModulePath so Windows PowerShell 5.1 loads its own Get-FileHash.
+      env: { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => key.toLowerCase() !== 'psmodulepath')), LOCALAPPDATA: dir, NPM_ARGS: npmArgs, PATH: `${dir};${process.env.PATH}` },
       timeout: 15_000,
     });
 

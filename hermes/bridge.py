@@ -25,7 +25,8 @@ def _run_windows_security(operation, path):
     system_root=os.environ.get('SystemRoot') or os.environ.get('WINDIR') or r'C:\Windows'
     powershell=Path(system_root)/'System32'/'WindowsPowerShell'/'v1.0'/'powershell.exe'
     if not powershell.is_file():powershell=Path('powershell.exe')
-    kwargs={'capture_output':True,'check':False}
+    # Windows PowerShell 5.1 must build its own module path; a PowerShell 7 parent's PSModulePath breaks Get-Acl.
+    kwargs={'capture_output':True,'check':False,'env':{k:v for k,v in os.environ.items() if k.lower()!='psmodulepath'}}
     if sys.platform=='win32':kwargs['creationflags']=getattr(subprocess,'CREATE_NO_WINDOW',0)
     try:
         result=subprocess.run([

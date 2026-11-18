@@ -18,7 +18,10 @@ const channelsArgument = option('--channels');
 const channels = verifyPrivatePath(channelsArgument, 'directory');
 const state = realpathSync(option('--state'));
 const fixture = argv.includes('--fixture');
-const production = resolve(process.env.CODEX_RESEARCH_CAMPAIGN_STATE_DIR || join(process.env.XDG_STATE_HOME || join(homedir(), '.local/state'), 'omo-research'));
+const productionPath = resolve(process.env.CODEX_RESEARCH_CAMPAIGN_STATE_DIR || join(process.env.XDG_STATE_HOME || join(homedir(), '.local/state'), 'omo-research'));
+// Compare canonical paths: `state` is canonical, and macOS temp/home paths often pass through symlinks.
+let production = productionPath;
+try { production = realpathSync(productionPath); } catch {}
 const fixtureRoot = fixture && argv.includes('--fixture-root') ? realpathSync(option('--fixture-root')) : null;
 const subpath = fixtureRoot ? relative(fixtureRoot, state) : null;
 const insideFixture = subpath && subpath !== '..' && !subpath.startsWith('..' + sep) && !isAbsolute(subpath);
