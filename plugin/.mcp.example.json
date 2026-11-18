@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "research-campaign": {
+      "command": "node",
+      "args": [
+        "packages/codex-mcp/src/server.mjs"
+      ],
+      "env": {
+        "CODEX_CAMPAIGN_CONTEXT_HOOKS": "1"
+      }
+    }
+  }
+}

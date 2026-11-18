@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "bundled": false,
+  "summary": "Campaign Manager does not ship these projects. Install each one from its upstream repository into every client that runs campaigns with a profile that requires it.",
+  "dependencies": [
+    {
+      "id": "superpowers",
+      "name": "Superpowers",
+      "author": "Jesse Vincent",
+      "repository": "https://github.com/obra/superpowers",
+      "license": "MIT",
+      "layer": "execution",
+      "tested_release": "v7.0.2",
+      "tested_commit": "22f0b463e7a5e579904dd6211a520321035526f7",
+      "required_by_profiles": ["engineering", "research_delivery"],
+      "skills_named_by_profiles": ["superpowers:verification-before-completion"],
+      "install": {
+        "hermes": {
+          "method": "Hermes plugin from the upstream repository",
+          "command": "hermes plugins install obra/superpowers --ref 22f0b463e7a5e579904dd6211a520321035526f7 --enable",
+          "notes": "With the default plugins.scan_on_install setting, Hermes blocks this community source after its security scan. Review the findings, then repeat the command with --force if you accept them. Add --yes-deps for a non-interactive install.",
+          "verified": "Linux, disposable Hermes profile: blocked without --force; installed and enabled at the tested commit with --force."
+        },
+        "codex": {
+          "method": "Official Codex plugin marketplace",
+          "steps": "In Codex, open /plugins, search for superpowers and select Install Plugin. See the upstream README for the Codex app.",
+          "verified": "Upstream-documented; not re-tested for this release."
+        }
+      }
+    },
+    {
+      "id": "co-researcher",
+      "name": "Co-Researcher",
+      "author": "poemswe",
+      "repository": "https://github.com/poemswe/co-researcher",
+      "license": "MIT",
+      "layer": "research method",
+      "tested_release": "v2.6.1",
+      "tested_commit": "aa4997de1ab9a776daded9ddc4a7638637ce6160",
+      "required_by_profiles": ["research", "research_delivery"],
+      "skills_named_by_profiles": ["co-researcher:research-manager", "co-researcher:research-methodology"],
+      "install": {
+        "hermes": {
+          "method": "Upstream clone registered as a Hermes external skill directory",
+          "command": "git clone --branch v2.6.1 https://github.com/poemswe/co-researcher.git <directory>",
+          "notes": "Add <directory>/skills to skills.external_dirs in the profile's config.yaml. Hermes does not security-scan external directories, so review the clone before adding it. Installing skills one by one with hermes skills install is not sufficient: the scanner blocks literature-review even with --force.",
+          "verified": "Linux, disposable Hermes profile: all 15 skills listed as enabled external skills."
+        },
+        "codex": {
+          "method": "Upstream Codex bootstrap",
+          "steps": "Follow .codex/INSTALL.md in the upstream repository: clone to ~/.codex/co-researcher, add its hook section to ~/.codex/AGENTS.md and run its bootstrap command.",
+          "verified": "Upstream-documented; not re-tested for this release."
+        }
+      }
+    }
+  ]
+}

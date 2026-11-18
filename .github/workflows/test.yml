@@ -1,0 +1,110 @@
+name: Tests
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm test
+      - run: npm run validate
+      - run: python -m pip install pytest
+      - run: python -m pytest hermes/tests -q
+      - name: Pack and install tarball outside the source tree
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          scratch="${RUNNER_TEMP}/campaign-manager-smoke"
+          build="$scratch/build"
+          mkdir -p "$scratch/package" "$scratch/source-gone" "$build"
+          tar --exclude='./.git' --exclude='./node_modules' --exclude='./dist' -cf - . | tar -xf - -C "$build"
+          mkdir -p "$build/hermes/__pycache__" "$build/docs/superpowers/specs"
+          printf 'synthetic cache marker\n' > "$build/hermes/__pycache__/pack-probe.pyc"
+          printf 'internal note marker\n' > "$build/docs/superpowers/specs/pack-probe.md"
+          (cd "$build" && npm pack --ignore-scripts --pack-destination "$scratch/package")
+          package_file=$(find "$scratch/package" -maxdepth 1 -name '*.tgz' -print -quit)
+          entries=$(tar -tzf "$package_file")
+          if printf '%s\n' "$entries" | grep -E '(__pycache__/|\.py[co]$|\.sqlite|\.key$|/\.env$|docs/superpowers/)'; then
+            echo 'Generated cache, state, key, or internal docs leaked into npm tarball.' >&2
+            exit 1
+          fi
+          npm_config_cache="$scratch/npm-cache" npm install --prefix "$scratch/source-gone" --ignore-scripts "$package_file"
+          rm -rf "$scratch/npm-cache" "$scratch/package"
+          cli="$scratch/source-gone/node_modules/agent-campaign-manager/bin/campaign-manager.mjs"
+          node "$cli" --version
+          node "$cli" --help
+          npm --prefix "$scratch/source-gone/node_modules/agent-campaign-manager" test
+          npm --prefix "$scratch/source-gone/node_modules/agent-campaign-manager" run validate
+          state=$(mktemp -d "${TMPDIR:-/tmp}/campaign-manager-installed-state.XXXXXX")
+          private_state="$state/private"
+          mkdir -m 700 "$private_state"
+          XDG_STATE_HOME="$private_state" node "$cli" init
+          XDG_STATE_HOME="$private_state" node "$cli" prepare codex --output "$state/codex"
+      - if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $scratch = Join-Path $env:RUNNER_TEMP 'campaign-manager-smoke'
+          $packageDir = Join-Path $scratch 'package'
+          $sourceGone = Join-Path $scratch 'source-gone'
+          $build = Join-Path $scratch 'build'
+          New-Item -ItemType Directory -Force -Path $packageDir, $sourceGone, $build | Out-Null
+          robocopy (Get-Location).Path $build /E /NFL /NDL /NJH /NJS /NP /XD .git node_modules dist | Out-Null
+          if ($LASTEXITCODE -ge 8) { throw "robocopy failed with exit code $LASTEXITCODE" }
+          $LASTEXITCODE = 0
+          $cacheFixture = Join-Path $build 'hermes/__pycache__'
+          $privateFixture = Join-Path $build 'docs/superpowers/specs'
+          New-Item -ItemType Directory -Force -Path $cacheFixture, $privateFixture | Out-Null
+          Set-Content -NoNewline -LiteralPath (Join-Path $cacheFixture 'pack-probe.pyc') -Value 'synthetic cache marker'
+          Set-Content -NoNewline -LiteralPath (Join-Path $privateFixture 'pack-probe.md') -Value 'internal note marker'
+          Push-Location $build
+          npm.cmd pack --ignore-scripts --pack-destination $packageDir | Out-Null
+          Pop-Location
+          if ($LASTEXITCODE -ne 0) { throw "npm pack failed with exit code $LASTEXITCODE" }
+          $packagePath = Get-ChildItem -LiteralPath $packageDir -Filter '*.tgz' | Select-Object -First 1 -ExpandProperty FullName
+          $entries = tar -tzf $packagePath
+          if ($entries | Where-Object { $_ -match '(__pycache__/|\.py[co]$|\.sqlite|\.key$|/\.env$|docs/superpowers/)' }) {
+            throw 'Generated cache, state, key, or internal docs leaked into npm tarball.'
+          }
+          $env:npm_config_cache = Join-Path $scratch 'npm-cache'
+          npm.cmd install --prefix $sourceGone --ignore-scripts $packagePath
+          if ($LASTEXITCODE -ne 0) { throw "npm install failed with exit code $LASTEXITCODE" }
+          Remove-Item -LiteralPath $env:npm_config_cache -Recurse -Force
+          $env:npm_config_cache = $null
+          $cli = Join-Path $sourceGone 'node_modules/agent-campaign-manager/bin/campaign-manager.mjs'
+          $installedPackage = Join-Path $sourceGone 'node_modules/agent-campaign-manager'
+          node $cli --version
+          node $cli --help
+          npm.cmd --prefix $installedPackage test
+          if ($LASTEXITCODE -ne 0) { throw "Installed package tests failed with exit code $LASTEXITCODE" }
+          npm.cmd --prefix $installedPackage run validate
+          if ($LASTEXITCODE -ne 0) { throw "Installed package validation failed with exit code $LASTEXITCODE" }
+          $stateRoot = Join-Path $env:USERPROFILE ('.campaign-manager-smoke-state-' + [Guid]::NewGuid().ToString('N'))
+          $privateState = Join-Path $stateRoot 'private'
+          $env:LOCALAPPDATA = $stateRoot
+          $env:CODEX_RESEARCH_CAMPAIGN_STATE_DIR = $privateState
+          node $cli init
+          node $cli prepare codex --output (Join-Path $stateRoot 'codex')
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm install --prefix "$RUNNER_TEMP/campaign-browser" --ignore-scripts playwright
+      - run: npx --prefix "$RUNNER_TEMP/campaign-browser" playwright install --with-deps chromium
+      - run: npm run test:browser
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/campaign-browser/node_modules/playwright/index.mjs

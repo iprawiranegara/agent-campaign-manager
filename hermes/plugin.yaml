@@ -1,0 +1,31 @@
+name: campaign-manager
+version: 0.2.0
+description: Conversation-isolated access to the existing Campaign Manager with native MCP permissions.
+author: Izzu Prawiranegara
+kind: standalone
+provides_tools:
+  - campaign_list
+  - campaign_search
+  - campaign_detail
+  - campaign_create
+  - campaign_bind
+  - campaign_status
+  - campaign_preflight
+  - campaign_work_package
+  - campaign_receipt
+  - campaign_reconcile
+  - campaign_update
+  - campaign_finish
+  - campaign_abandon
+  - campaign_unbind
+provides_hooks:
+  - post_compaction
+  - on_session_delete
+  - on_session_reset
+  - on_session_finalize
+provides_middleware:
+  - llm_request
+config_schema:
+  channel_dir:
+    type: str
+    description: Explicit profile-owned private channel directory shared only with its configured router.

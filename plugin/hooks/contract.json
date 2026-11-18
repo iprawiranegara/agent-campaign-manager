@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "mode": "advisory",
+  "activation": "surface-dependent",
+  "events": [
+    {
+      "event": "SessionStart",
+      "action": "read-explicit-binding-and-inject-bounded-checkpoint",
+      "mutation": false
+    },
+    {
+      "event": "SubagentStart",
+      "action": "propagate-registered-work-package-envelope",
+      "mutation": false
+    },
+    {
+      "event": "PreToolUse",
+      "action": "check-binding-scope-and-required-gate",
+      "mutation": false
+    },
+    {
+      "event": "PostToolUse",
+      "action": "capture-candidate-evidence-receipt",
+      "mutation": true
+    },
+    {
+      "event": "PreCompact",
+      "action": "write-checkpoint-and-inject-recovery-summary",
+      "mutation": true
+    },
+    {
+      "event": "SessionEnd",
+      "action": "end-run-without-auto-close",
+      "mutation": true
+    }
+  ]
+}

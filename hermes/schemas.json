@@ -1,0 +1,520 @@
+[
+  {
+    "name": "campaign_list",
+    "title": "List campaigns",
+    "description": "List durable campaigns without selecting one. Use this before binding a session.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {}
+    }
+  },
+  {
+    "name": "campaign_search",
+    "title": "Search campaigns",
+    "description": "Search durable campaign summaries for an owner decision. Search never binds a session.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "query": {
+          "type": "string"
+        },
+        "lifecycle": {
+          "type": "string"
+        },
+        "phase": {
+          "type": "string"
+        },
+        "accountable_primary": {
+          "type": "string"
+        },
+        "scope_root": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 500
+        }
+      }
+    }
+  },
+  {
+    "name": "campaign_detail",
+    "title": "Inspect campaign detail",
+    "description": "Inspect one exact campaign and receive its identity digest before binding. This is available only while unbound.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "campaign_id"
+      ],
+      "properties": {
+        "campaign_id": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  {
+    "name": "campaign_create",
+    "title": "Create campaign",
+    "description": "Create a new campaign after owner approval. Creation rejects an existing ID and leaves this session unbound.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "campaign_id",
+        "objective",
+        "scope_roots",
+        "actor"
+      ],
+      "properties": {
+        "campaign_id": {
+          "type": "string"
+        },
+        "objective": {
+          "type": "string"
+        },
+        "scope_roots": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "actor": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "charter": {
+          "type": "object"
+        },
+        "accountable_primary": {
+          "type": "string"
+        },
+        "profile": {
+          "type": "string",
+          "enum": [
+            "research",
+            "engineering",
+            "research_delivery",
+            "status_only"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "campaign_bind",
+    "title": "Bind session to campaign",
+    "description": "Attach this MCP session to an existing campaign after exact identity and version checks. Binding never changes durable campaign version.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "campaign_id",
+        "expected_version",
+        "identity_digest",
+        "actor",
+        "run_id",
+        "thread_id"
+      ],
+      "properties": {
+        "campaign_id": {
+          "type": "string"
+        },
+        "expected_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "identity_digest": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "client": {
+          "type": "string"
+        },
+        "thread_id": {
+          "type": "string"
+        },
+        "parent_thread_id": {
+          "type": "string"
+        },
+        "agent_id": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "adapter_version": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  {
+    "name": "campaign_status",
+    "title": "Read bound campaign status",
+    "description": "Read the currently bound campaign. The default response is compact; use view=full only when the full event tail is needed.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "view": {
+          "type": "string",
+          "enum": [
+            "compact",
+            "full"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "campaign_preflight",
+    "title": "Run campaign preflight",
+    "description": "Read authority order, scope, protected state, phase, and the next permitted action for the bound campaign.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "run_id": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  {
+    "name": "campaign_work_package",
+    "title": "Register work package",
+    "description": "Register one bounded parent or child task under the bound campaign.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expected_version",
+        "actor",
+        "run_id",
+        "work_package_id",
+        "title",
+        "allowed_paths"
+      ],
+      "properties": {
+        "expected_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "actor": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "work_package_id": {
+          "type": "string"
+        },
+        "parent_work_package_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "objective": {
+          "type": "string"
+        },
+        "task": {
+          "type": "object"
+        },
+        "allowed_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "forbidden_actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "required_governance": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "required_verification": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "stop_conditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "authority_and_freshness_slice": {
+          "type": "object"
+        },
+        "required_inputs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "expected_outputs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "verification_checks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "command_policy": {
+          "type": "object"
+        },
+        "receipt_schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  {
+    "name": "campaign_receipt",
+    "title": "Record campaign receipt",
+    "description": "Record source, method, command, test, review, or other evidence under a bound work package.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expected_version",
+        "actor",
+        "run_id",
+        "kind",
+        "data"
+      ],
+      "properties": {
+        "expected_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "actor": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "work_package_id": {
+          "type": "string"
+        },
+        "receipt_id": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object"
+        }
+      }
+    }
+  },
+  {
+    "name": "campaign_reconcile",
+    "title": "Reconcile work package",
+    "description": "Accept, reject, request changes, or block a registered work package after parent review.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expected_version",
+        "actor",
+        "run_id",
+        "work_package_id",
+        "outcome"
+      ],
+      "properties": {
+        "expected_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "actor": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "work_package_id": {
+          "type": "string"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "accepted",
+            "rejected",
+            "request_changes",
+            "blocked"
+          ]
+        },
+        "details": {
+          "type": "object"
+        }
+      }
+    }
+  },
+  {
+    "name": "campaign_update",
+    "title": "Update bound campaign",
+    "description": "Apply one expected-version checked lifecycle, phase, or work-package status update.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expected_version",
+        "actor"
+      ],
+      "properties": {
+        "expected_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "actor": {
+          "type": "string"
+        },
+        "lifecycle": {
+          "type": "string"
+        },
+        "phase": {
+          "type": "object"
+        },
+        "work_package_id": {
+          "type": "string"
+        },
+        "work_package_status": {
+          "type": "string"
+        },
+        "details": {
+          "type": "object"
+        }
+      }
+    }
+  },
+  {
+    "name": "campaign_finish",
+    "title": "Finish campaign",
+    "description": "Finish a bound campaign from its verifying/closing gate with final inventory and closeout evidence.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expected_version",
+        "actor",
+        "run_id",
+        "closeout"
+      ],
+      "properties": {
+        "expected_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "actor": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "closure_kind": {
+          "type": "string",
+          "enum": [
+            "FULL",
+            "QUALIFIED"
+          ]
+        },
+        "closeout": {
+          "type": "object"
+        }
+      }
+    }
+  },
+  {
+    "name": "campaign_abandon",
+    "title": "Abandon campaign",
+    "description": "Intentionally stop a bound campaign while preserving its evidence, reason, limitations, and checkpoint.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "expected_version",
+        "actor",
+        "run_id",
+        "reason"
+      ],
+      "properties": {
+        "expected_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "actor": {
+          "type": "string"
+        },
+        "run_id": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "details": {
+          "type": "object"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "campaign_unbind",
+    "title": "Unbind session",
+    "description": "Clear only this MCP session's campaign binding. It does not finish, abandon, or mutate the campaign.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {}
+    }
+  }
+]

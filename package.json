@@ -1,0 +1,42 @@
+{
+  "name": "agent-campaign-manager",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "Durable task continuity for Hermes and Codex.",
+  "files": [
+    "bin/",
+    "scripts/",
+    "install/",
+    "plugin/",
+    "hermes/*.py",
+    "hermes/*.mjs",
+    "hermes/*.yaml",
+    "hermes/*.json",
+    "hermes/*.ps1",
+    "hermes/README.md",
+    "hermes/tests/*.py",
+    "dashboard/",
+    "tests/",
+    "CONTRIBUTING.md",
+    "PUBLISHING.md",
+    "docs/*.md",
+    "README.md",
+    "dependencies.json",
+    "LICENSE",
+    "SECURITY.md",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "bin": {
+    "campaign-manager": "bin/campaign-manager.mjs"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs plugin/tests/*.test.mjs dashboard/tests/*.test.mjs",
+    "test:browser": "node dashboard/tests/browser.mjs",
+    "validate": "node scripts/validate-publication.mjs"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "codex-research-campaign",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Provider-neutral campaign core and Codex MCP adapter.",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "validate": "node scripts/validate-plugin.mjs"
+  }
+}

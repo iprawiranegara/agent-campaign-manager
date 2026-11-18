@@ -1,0 +1,27 @@
+{
+  "description": "Read-only reminders for the explicitly bound Codex campaign after compaction.",
+  "hooks": {
+    "SessionStart": [{
+      "matcher": "^compact$",
+      "hooks": [{
+        "type": "mcp_tool", "server": "research-campaign", "tool": "campaign_context_hook",
+        "input": { "event": "SessionStart", "source": "${source}" },
+        "timeout": 5, "statusMessage": "Refreshing bound campaign context"
+      }]
+    }],
+    "PostToolUse": [{
+      "hooks": [{
+        "type": "mcp_tool", "server": "research-campaign", "tool": "campaign_context_hook",
+        "input": { "event": "PostToolUse" }, "timeout": 5,
+        "statusMessage": "Checking bound campaign context"
+      }]
+    }],
+    "UserPromptSubmit": [{
+      "hooks": [{
+        "type": "mcp_tool", "server": "research-campaign", "tool": "campaign_context_hook",
+        "input": { "event": "UserPromptSubmit" }, "timeout": 5,
+        "statusMessage": "Checking bound campaign context"
+      }]
+    }]
+  }
+}

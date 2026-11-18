@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Campaign manager</title>
+  <link rel="stylesheet" href="/dashboard.css">
+  <script type="module" src="/dashboard.js"></script>
+</head>
+<body>
+<div id="campaign-preview" aria-label="Campaign dashboard">
+  <div class="cp-app">
+    <header class="cp-bar">
+      <div class="cp-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5 9-5Z M3 12l9 5 9-5 M3 16l9 5 9-5"/></svg></div>
+      <span class="cp-brand">Campaign manager</span>
+      <span class="cp-bar-note">Read only</span>
+      <button type="button" class="cp-refresh" id="cp-refresh">Refresh</button>
+    </header>
+    <div class="cp-shell">
+      <aside class="cp-sidebar" aria-label="Filter by repository">
+        <div class="cp-nav-label">Repositories &amp; scopes</div>
+        <nav id="cp-repositories" aria-label="Repositories"></nav>
+        <div class="cp-side-foot"><span>Read-only overview</span><span>Existing campaign store</span></div>
+      </aside>
+      <main class="cp-main">
+        <div class="cp-heading"><div><h1 id="cp-heading">All campaigns</h1><p class="cp-subtitle">What’s happening, and where.</p></div><span class="cp-sync-state" id="cp-sync-state" aria-live="polite">Connecting…</span></div>
+        <div class="cp-error" id="cp-error" role="alert" hidden><span id="cp-error-message"></span><button type="button" class="cp-refresh" id="cp-retry">Retry</button></div>
+        <div class="cp-toolbar">
+          <label class="cp-mobile-filter" for="cp-repo-select">Repository or scope<select id="cp-repo-select"><option value="">All repositories</option></select></label>
+          <div class="cp-segments" role="group" aria-label="Filter campaign status">
+            <button type="button" class="cp-segment" data-filter="open" aria-pressed="true">Open</button>
+            <button type="button" class="cp-segment" data-filter="attention" aria-pressed="false">Needs you</button>
+            <button type="button" class="cp-segment" data-filter="all" aria-pressed="false">All</button>
+          </div>
+          <span id="cp-result-count" class="cp-result-count" aria-live="polite"></span>
+        </div>
+        <p id="cp-loading" class="cp-empty" role="status">Loading campaigns…</p>
+        <table class="cp-table" id="cp-table" aria-label="Campaigns" hidden>
+          <thead><tr><th scope="col">Campaign</th><th scope="col">Repository</th><th scope="col">Recorded status</th><th scope="col">Updated</th></tr></thead>
+          <tbody id="cp-rows"></tbody>
+        </table>
+        <p id="cp-empty" class="cp-empty" hidden></p>
+        <section id="cp-detail" class="cp-detail" aria-label="Selected campaign details" aria-live="polite" hidden></section>
+        <footer class="cp-freshness"><span aria-hidden="true">ⓘ</span><span>Status reflects the last saved update; current agent activity is unknown. <span id="cp-last-read">No successful refresh yet.</span></span></footer>
+      </main>
+    </div>
+  </div>
+</div>
+</body>
+</html>
