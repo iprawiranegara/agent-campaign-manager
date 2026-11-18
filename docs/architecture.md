@@ -40,7 +40,7 @@ The npm package exposes `campaign-manager`. Its `prepare` commands create standa
 
 `init` is the explicit schema-initialization operation. The runtime server opens an existing compatible database and rejects missing/incompatible state. Set the same absolute state directory for both adapters when sharing a ledger is intended. The default convention is `$XDG_STATE_HOME/omo-research`, or `~/.local/state/omo-research` when XDG is unset; generated descriptors instead pin the directory explicitly chosen during setup.
 
-The portable Hermes router uses a relative shared-core import. In normal mode, `--state` must match its configured environment/default state directory. Fixture mode additionally requires an explicit containment root and rejects production state. It forces its child server into the default 14-tool contract even when Codex hook mode is set in the parent environment.
+The portable Hermes router uses a relative shared-core import. In normal mode, `--state` must match its configured environment/default state directory. Fixture mode also requires an explicit containment root and rejects production state. It forces its child server into the default 14-tool contract even when Codex hook mode is set in the parent environment.
 
 ## Permissions and failure behavior
 

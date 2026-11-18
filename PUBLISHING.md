@@ -1,17 +1,15 @@
-# Publication handoff
+# Releasing
 
-The source package, dashboard and npm-installable tarball are prepared locally. Creating a GitHub repository, uploading artifacts, publishing to the npm registry and tagging a release are separate maintainer actions.
+Campaign Manager ships as an npm archive attached to a GitHub release. It is not published to the npm registry: `package.json` keeps `"private": true` so that `npm publish` refuses to run. Publishing to the registry would mean choosing an available package name and removing that flag on purpose.
 
-Before upload:
+To cut a release:
 
-- Choose the repository owner/name and replace any release-facing repository URL placeholders if adding clone commands or badges. Current installation instructions work from a downloaded checkout and do not invent a repository URL.
-- Review README, both installation guides, the retained MIT notice and the source-provenance note.
-- Run `npm test`, `npm run validate`, the Python adapter tests and a clean npm-tarball installation. Preserve optional skips and native platform verification boundaries; run the configured Windows/Linux/macOS CI matrix before claiming it passed.
-- Enable a private security-reporting route or update SECURITY.md with the preferred contact.
-- Publish only the source files. Generated `.local/` directories, databases, keys and machine configuration are excluded.
+1. Update the version everywhere it appears: `package.json`, `plugin/package.json`, `plugin/.codex-plugin/plugin.json`, `hermes/plugin.yaml`, the server and router version constants, and the archive names and output paths in the docs (`git grep` the old version to find them). Then run `npm test`, `npm run validate` and `python -m pytest hermes/tests -q`.
+2. Push to `master` and wait for the Tests workflow to pass on Windows, Ubuntu, macOS and the browser job. Record any skipped native checks in [compatibility](docs/compatibility.md).
+3. Build the archive with `npm pack --ignore-scripts` and record its SHA-256.
+4. Install that archive into a disposable npm prefix with lifecycle scripts disabled, then run `campaign-manager --version`, `init` and both `prepare` commands against a scratch state directory.
+5. Create a GitHub release with a version tag, attach the archive, and put its SHA-256 in the release notes so the shell and PowerShell installers can verify it.
 
-The package remains `private: true` in package.json to prevent accidental registry publication. Users can install its `.tgz` with npm before a registry listing exists. Shell and PowerShell wrappers accept that local archive or an explicitly selected HTTPS archive plus SHA-256. No public install URL is invented. Registry publication requires choosing an available npm package identity and intentionally changing the private flag.
+Publish only source files. Generated `.local/` directories, databases, channel keys and machine configuration stay out of the repository and the archive; `npm run validate` checks the archive's file list.
 
-The CLI installs the command and prepares standalone adapter files. Native client registration, hook trust and plugin enablement are explicit. This release does not claim automatic remote marketplace/catalog activation.
-
-After upload, link the actual repository and issue/reporting routes, then test the downloaded release archive from a fresh directory before tagging it as stable. Do not promote inherited host-specific evidence into broader platform claims.
+The CLI installs the command and prepares standalone adapter files. Registering the plugin with a client, trusting its hooks and enabling it remain manual steps in each client.

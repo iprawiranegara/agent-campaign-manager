@@ -6,7 +6,7 @@ The default campaign profile also expects [Superpowers](https://github.com/obra/
 
 ## npm archive: Windows, Linux and macOS
 
-Download `agent-campaign-manager-0.2.0.tgz` and its release checksum. From the download directory:
+Build `agent-campaign-manager-0.2.0.tgz` from a clone with `npm pack --ignore-scripts`, or download it with its SHA-256 from a [GitHub release](https://github.com/iprawiranegara/agent-campaign-manager/releases). From the directory that holds the archive:
 
 ```sh
 npm install --global --ignore-scripts ./agent-campaign-manager-0.2.0.tgz
@@ -16,7 +16,7 @@ campaign-manager init
 
 PowerShell accepts the same commands; `campaign-manager.cmd` is available if the local PowerShell script policy blocks npm's `.ps1` shim. Use a user-writable npm installation. This package does not need administrator access or a changed system execution policy.
 
-Before public hosting, use the archive built in `dist/`. A registry install by package name and a public download one-liner require a published package or release URL; this source preparation does not create either.
+The package isn't on the npm registry, so `npm install agent-campaign-manager` by name does not work. Install from the archive file.
 
 ## Downloaded shell or PowerShell installer
 
@@ -34,7 +34,7 @@ Windows PowerShell:
 & ./install/install.ps1 -Source ./agent-campaign-manager-0.2.0.tgz
 ```
 
-Both accept an HTTPS archive URL. Supply the SHA-256 from the release through `--sha256` or `-Sha256`; URL downloads require a checksum. Download and inspect an installer using `curl` or `Invoke-WebRequest`, then run the downloaded file. Remote URLs must identify the real release after publication. The project does not recommend `Invoke-Expression` as an installation requirement.
+Both accept an HTTPS archive URL, such as a release asset. Supply the SHA-256 from the release through `--sha256` or `-Sha256`; URL downloads require a checksum. Download and inspect an installer using `curl` or `Invoke-WebRequest`, then run the downloaded file. Don't pipe an installer into `Invoke-Expression`.
 
 ## Prepare the clients
 

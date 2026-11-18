@@ -6,7 +6,7 @@ Keep a long implementation or research campaign connected to its objective after
 
 [Install](docs/install.md) · [Dependencies](docs/dependencies.md) · [Codex setup](docs/install-codex.md) · [Hermes setup](docs/install-hermes.md) · [Dashboard](docs/dashboard.md) · [Use a campaign](docs/usage.md)
 
-## For agent
+## For agents
 
 Read and follow the [agent installation instructions](docs/install-agent.md).
 
@@ -63,23 +63,35 @@ The research and engineering profiles rely on two skill libraries maintained by 
 - [Superpowers](https://github.com/obra/superpowers) by Jesse Vincent (MIT): execution, review and verification discipline. Needed by `engineering` and `research_delivery`.
 - [Co-Researcher](https://github.com/poemswe/co-researcher) by poemswe (MIT): research method and academic-integrity skills. Needed by `research` and `research_delivery`.
 
-`research_delivery` is the default profile, so a default campaign expects both. `status_only` needs neither. [Dependencies](docs/dependencies.md) gives the tested releases and the install commands for Hermes and Codex; [`dependencies.json`](dependencies.json) is the machine-readable copy.
+| Profile | Expects |
+| --- | --- |
+| `research` | Co-Researcher |
+| `engineering` | Superpowers |
+| `research_delivery` (default) | Both |
+| `status_only` | Neither |
+
+[Dependencies](docs/dependencies.md) gives the tested releases and the install commands for Hermes and Codex; [`dependencies.json`](dependencies.json) is the machine-readable copy.
+
+A profile declares which skills a campaign expects; the agent still has to load and follow them. The ledger does not show whether the agent applied a research method correctly or reviewed evidence thoroughly. Pick the profile that matches the work rather than applying research requirements to every task.
 
 ## Install
 
 Requirements: Node.js 24 or newer. The core and dashboard use Node built-ins with no npm runtime dependencies. Hermes also needs its own Python runtime and plugin APIs. The target platforms are native Windows, Linux and macOS; see the [verification boundaries](docs/compatibility.md).
 
-Download the npm archive from the release, then install the command:
+Campaign Manager isn't listed on the npm registry; npm installs it from its archive file. Build the archive from a clone, then install the command:
 
 ```bash
+git clone https://github.com/iprawiranegara/agent-campaign-manager.git
+cd agent-campaign-manager
+npm pack --ignore-scripts
 npm install --global --ignore-scripts ./agent-campaign-manager-0.2.0.tgz
 campaign-manager --help
 campaign-manager init
 ```
 
-These commands work in PowerShell and POSIX shells. The package does not need an npm registry listing: npm can install the release archive directly. This source preparation does not publish a registry package or a hosted download URL. [Shell and PowerShell installers](docs/install.md) use the same archive.
+These commands work in PowerShell and POSIX shells. Archives attached to a [GitHub release](https://github.com/iprawiranegara/agent-campaign-manager/releases) install the same way. [Shell and PowerShell installers](docs/install.md) wrap the same archive.
 
-`init` explicitly creates an empty ledger. It creates no sample campaigns and retains existing compatible campaigns. `omo-research` preserves the inherited schema convention. An incompatible database stops setup. Use `--state-dir` to select another absolute directory consistently for every command.
+`init` explicitly creates an empty ledger. It creates no sample campaigns and retains existing compatible campaigns. The default ledger folder is named `omo-research`, after the project the schema comes from. An incompatible database stops setup. Use `--state-dir` to select another absolute directory consistently for every command.
 
 Then follow the client guide:
 
@@ -109,19 +121,6 @@ On a later session:
 > Find `parser-migration`, inspect its objective and scope, then bind this conversation to it. Read current status and preflight before continuing the outstanding work.
 
 A fresh process starts unbound. Sharing a database does not silently resume a campaign. See [usage](docs/usage.md) for tools, switching campaigns, errors and finish rules.
-
-## Research and engineering skills
-
-The campaign layer works with profile-specific skill guidance:
-
-| Profile | Expected method / execution layer |
-| --- | --- |
-| `research` | Co-Researcher |
-| `engineering` | Superpowers |
-| `research_delivery` (default) | Both |
-| `status_only` | Neither |
-
-Install [Co-Researcher](https://github.com/poemswe/co-researcher) and [Superpowers](https://github.com/obra/superpowers) from upstream as described in [dependencies](docs/dependencies.md). The profiles declare expectations; the agent must load and follow the applicable skills. The ledger does not prove that the agent used a research method correctly or reviewed evidence thoroughly. Select the profile that matches the work rather than applying research requirements to every task.
 
 ## Boundaries
 

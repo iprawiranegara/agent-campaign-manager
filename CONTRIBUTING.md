@@ -27,3 +27,5 @@ Channel tests require a temporary root whose ancestors are not writable by anoth
 Windows channel tests must exercise real NTFS ACLs, including rejection of broad/inherited permissions and reparse points; POSIX mode projections are insufficient. Keep cross-platform test paths native and test both outside-scope siblings and spaces/Unicode. CI has Windows, Ubuntu and macOS jobs. Record which native jobs actually ran.
 
 Never commit generated `.local/` installations, credentials, state databases, channel keys or operational transcripts. Run validation before packaging. Review the archive manifest as well as the source diff.
+
+The package uses no third-party runtime code. Before adding any, such as an MCP SDK, check that its license is compatible with MIT and add it to both third-party notices.

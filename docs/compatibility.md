@@ -2,7 +2,7 @@
 
 ## Supported installation target
 
-The 0.2.0 release targets native Windows, Linux and macOS. Node 24+ is the baseline. The verification record below distinguishes actual native runs from configured CI coverage. There are no npm runtime dependencies. Python is supplied by the Hermes installation; `pytest` is a development dependency only.
+The 0.2.0 release targets native Windows, Linux and macOS. Node 24+ is the baseline. The verification record below separates GitHub Actions runs from native host runs. There are no npm runtime dependencies. Python is supplied by the Hermes installation; `pytest` is a development dependency only.
 
 | Surface | Verified boundary |
 | --- | --- |
@@ -15,9 +15,19 @@ Codex must support native `_meta.threadId` forwarding and MCP-tool hooks. Hermes
 
 Native Windows channel protection uses Windows PowerShell 5.1+ and NTFS ownership/access-control APIs. Linux and macOS retain POSIX permission checks. An insecure channel directory/key or failed security check rejects dispatch. The shared core rejects paths outside scope using native path separators.
 
-The platform CI workflow includes Windows, Ubuntu and macOS. Adding a matrix does not establish that those jobs ran: this locally prepared release has not been uploaded. Native macOS execution requires an available Mac or a completed macOS CI job before it can be reported as verified. Native client SDK tests additionally require compatible local Hermes/Codex installations; component tests are a separate boundary.
+CI covers the package on all three systems. Native client SDK tests also need compatible local Hermes/Codex installations, so they ran only on the hosts listed below.
 
 ## 0.2.0 verification record
+
+GitHub Actions, run on Windows Server 2025, Ubuntu and macOS (arm64) with Node 24.22 and Python 3.12. Each job runs the tests in the source tree, then packs the npm archive, installs it outside the source tree and repeats the tests and validation from the installed copy:
+
+| Boundary | Observed result |
+| --- | --- |
+| Ubuntu and macOS | 88 Node tests: 86 passed, zero failed, two skips (Windows-only installer check, external OMO adapter). Hermes suite: 33 passed, six skips. Installed archive initialized a ledger and prepared a Codex installation. |
+| Windows | 88 Node tests: 84 passed, zero failed, four skips (two POSIX shell-installer checks, the symlinked-path check, external OMO adapter). Hermes suite: 33 passed, six skips. Installed archive initialized a ledger and prepared a Codex installation. |
+| Dashboard browser (Ubuntu, Chromium) | Playwright acceptance script passed. |
+
+Native host runs during preparation, on an earlier revision of the test suite:
 
 | Boundary | Observed result |
 | --- | --- |
@@ -31,11 +41,11 @@ The platform CI workflow includes Windows, Ubuntu and macOS. Adding a matrix doe
 | Install entry points | Actual POSIX shell and native PowerShell installs passed with a local checksum-verified archive, followed by cache removal, explicit init and both client preparations. |
 | Native Windows Hermes suite, Python 3.12.15 and PowerShell 5.1 | 32 passed, zero failed, six skips (two optional host SDK integrations and four POSIX-only checks). Includes signed routing, key creation/cleanup, ACL and junction rejection, replay/identity isolation and refusal to repair a nonempty insecure key. |
 | Native Windows Hermes SDK, 0.23.2+314.g23fbfbf with its existing Python 3.14.9 environment | Both native dispatch/consent/identity and loaded-plugin compaction/middleware tests passed with synthetic state. The host's managed environment supplies its dependencies; no production profile or package installation was changed. |
-| macOS | Targeted by portable APIs and the CI matrix; no native macOS run was available during local preparation. |
+| macOS | Covered by CI only. Native Hermes and Codex client runs on macOS have not been done. |
 
-Windows tests used a new private per-user temporary root. This machine's normal temporary folder has other-user write ACEs, so the channel helper correctly rejects it. Existing machine directory permissions were preserved. The package does not claim that an arbitrary user-selected shared folder is secure.
+Windows tests used a new private per-user temporary root. On the Windows test host the default temporary folder granted write access to other users, so the channel helper rejected it, as designed. Existing directory permissions were left unchanged. The check does not guarantee that a shared folder you choose yourself is secure.
 
-A configured CI matrix has not run until the source is uploaded and jobs complete. Native component checks are separate from enabling the plugin in an existing desktop conversation. The previous 0.1.1 client integration record remains historical.
+Native component checks are separate from enabling the plugin in an existing desktop conversation.
 
 ## Reminder modes
 
@@ -51,4 +61,4 @@ A binding must already exist when compaction occurs. New or changed bindings req
 
 `python -m pytest hermes/tests -q` runs the self-contained adapter checks and skips native Hermes integrations when `HERMES_SOURCE` is absent. Supplying the matching checkout/runtime enables those integrations. See [contributing](../CONTRIBUTING.md).
 
-The native consumer verification for this preparation uses isolated profiles, synthetic campaigns and a deterministic local model provider. It checks actual hook/compaction/tool boundaries and context delivery. It does not prove that a model will consistently obey reminders or complete an unattended campaign. The core validates evidence structure, not the truth of every recorded claim.
+The native client checks for 0.2.0 used isolated profiles, synthetic campaigns and a deterministic local model provider. It checks actual hook/compaction/tool boundaries and context delivery. It does not prove that a model will consistently obey reminders or complete an unattended campaign. The core validates evidence structure, not the truth of every recorded claim.

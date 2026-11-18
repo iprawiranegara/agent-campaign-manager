@@ -8,4 +8,5 @@ The campaign profiles name skills from two separately maintained projects. This 
 
 - [Superpowers](https://github.com/obra/superpowers), copyright (c) 2025 Jesse Vincent, MIT License.
 - [Co-Researcher](https://github.com/poemswe/co-researcher), copyright (c) 2025-2026 poemswe, MIT License.
- Hermes and Codex are separate host applications with their own terms and licenses.
+
+Hermes and Codex are separate host applications with their own terms and licenses.
