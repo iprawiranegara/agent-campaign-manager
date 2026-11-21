@@ -22,9 +22,15 @@ import os,sys,json,subprocess,importlib.util
 from pathlib import Path
 from unittest.mock import patch
 root=Path(sys.argv[1]);tmp=Path(sys.argv[2]);source=Path(sys.argv[3]);node=sys.argv[4]
+sys.path.insert(0,os.environ['HERMES_SOURCE'])
+try:
+ # Newer Hermes checkouts load their managed dependencies here, as the installed launcher does.
+ # Import it before HERMES_HOME points at the disposable profile so it does not re-run this script.
+ import hermes_bootstrap
+except ImportError:
+ pass
 home=tmp/'home';home.mkdir(mode=0o700);channels=home/'channels';state=tmp/'state';state.mkdir();scope=tmp/'scope';scope.mkdir()
 os.environ['HERMES_HOME']=str(home)
-sys.path.insert(0,os.environ['HERMES_SOURCE'])
 (home/'config.yaml').write_text('plugins:\n  entries:\n    campaign-manager:\n      mcp_allowlist: [campaign-router]\n')
 subprocess.run([node,'--input-type=module','-e',f"import {{createStore}} from {json.dumps((source/'packages/campaign-core/src/core.mjs').as_uri())};const s=createStore({{dbPath:{json.dumps(str(state/'campaigns.sqlite3'))},allowCreate:true}});s.dispose();"],check=True,capture_output=True)
 from hermes_cli.plugins import PluginManager,PluginContext,PluginManifest
@@ -94,7 +100,9 @@ try:
   assert call('campaign_list')['code']=='ADAPTER_OUTCOME_UNKNOWN'
  print('CAMPAIGN_NATIVE_RECEIPT='+json.dumps({'native_denial_no_write':True,'accepted_fixture_readback':True,'trusted_bind_identity':True,'a_b_isolation':True,'trusted_compaction_rotation':True,'missing_allowlist_denied':True,'raw_router_tools_hidden':True,'all_14_operations_native_dispatch':True,'receipt_reconcile_full_close':True}),flush=True)
 finally:
- bridge.close()
+ # Cleanup unbinds owned routes through the same consent path; keep it inside the fixture's approval scope.
+ with patch('tools.mcp_tool_handlers._trust_granted',return_value=False),patch('tools.approval_prompt.request_elicitation_consent',return_value='accept'):
+  bridge.close()
  with session_tool_scope(mgr.scope_key):shutdown_mcp_servers(scope=mgr.scope_key)
 '''
     python=os.environ.get('HERMES_PYTHON',sys.executable)
