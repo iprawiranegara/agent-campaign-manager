@@ -6,7 +6,7 @@ import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { createStore } from "../packages/campaign-core/src/core.mjs";
-import { invokeTool } from "../packages/codex-mcp/src/tools.mjs";
+import { invokeTool } from "../packages/mcp-server/src/tools.mjs";
 
 const packageRoot = join(import.meta.dirname, "..");
 const omoToolsPath = process.env.OMO_TOOLS_PATH;

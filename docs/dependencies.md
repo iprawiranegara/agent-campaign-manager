@@ -48,4 +48,4 @@ Both Codex procedures come from the upstream projects and weren't re-tested for 
 
 ## Other clients
 
-Both projects document installation for further clients, including Claude Code. See their READMEs. Campaign Manager's own adapters cover Codex and Hermes only.
+Both projects document installation for further clients, including Claude Code; use their READMEs for that route. Campaign Manager has adapters for Codex, Claude Code and Hermes. The Claude Code routes of the two dependencies were not re-tested for this release.

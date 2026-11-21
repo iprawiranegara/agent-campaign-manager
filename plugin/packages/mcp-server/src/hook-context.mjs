@@ -1,9 +1,10 @@
-// Codex-only native hook output. Campaign mutations remain in the existing core.
+// Host-neutral reminder hook output ({hookSpecificOutput.additionalContext}, read by Codex and Claude Code).
+// Campaign mutations remain in the core.
 import { createHash } from 'node:crypto';
 
 export const CONTEXT_TOOL = {
   name: 'campaign_context_hook',
-  description: 'Read-only callback for native Codex campaign reminder hooks. Uses only the host thread binding; never selects or advances a campaign.',
+  description: 'Read-only callback for native host campaign reminder hooks. Uses only the host thread binding; never selects or advances a campaign.',
   inputSchema: {
     type: 'object', additionalProperties: false,
     properties: {

@@ -1,9 +1,9 @@
 {
-  "name": "codex-research-campaign",
+  "name": "agent-campaign-manager-plugin",
   "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Provider-neutral campaign core and Codex MCP adapter.",
+  "description": "Harness-neutral campaign core and stdio MCP server for Codex, Claude Code and Hermes.",
   "engines": {
     "node": ">=22.5"
   },

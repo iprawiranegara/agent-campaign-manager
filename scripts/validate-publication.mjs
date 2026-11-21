@@ -37,7 +37,7 @@ for(const path of paths) {
     }
   }
 }
-for(const required of ['README.md','LICENSE','THIRD_PARTY_NOTICES.md','docs/install-codex.md','docs/install-hermes.md','docs/usage.md','docs/compatibility.md','SECURITY.md'])assert(existsSync(join(root,required)),`Missing ${required}`);
+for(const required of ['README.md','LICENSE','THIRD_PARTY_NOTICES.md','docs/install-codex.md','docs/install-claude.md','docs/install-hermes.md','docs/usage.md','docs/compatibility.md','SECURITY.md'])assert(existsSync(join(root,required)),`Missing ${required}`);
 const npmArgs=['pack','--dry-run','--json','--ignore-scripts'];
 const pack=process.env.npm_execpath
   ? spawnSync(process.execPath,[process.env.npm_execpath,...npmArgs],{cwd:root,encoding:'utf8'})

@@ -1,10 +1,10 @@
 # Campaign Manager
 
-**Durable task continuity for Hermes and Codex, with a read-only web dashboard.**
+**Durable task continuity for Codex, Claude Code and Hermes, with a read-only web dashboard.**
 
 Keep a long implementation or research campaign connected to its objective after compaction, interruptions and new sessions. Campaign Manager stores a local work ledger, binds a conversation to one selected campaign, and restores a short reminder from that campaign when work continues.
 
-[Install](docs/install.md) · [Dependencies](docs/dependencies.md) · [Codex setup](docs/install-codex.md) · [Hermes setup](docs/install-hermes.md) · [Dashboard](docs/dashboard.md) · [Use a campaign](docs/usage.md)
+[Install](docs/install.md) · [Dependencies](docs/dependencies.md) · [Codex setup](docs/install-codex.md) · [Claude Code setup](docs/install-claude.md) · [Hermes setup](docs/install-hermes.md) · [Dashboard](docs/dashboard.md) · [Use a campaign](docs/usage.md)
 
 ## For agents
 
@@ -44,15 +44,25 @@ Refreshing a reminder is a read. It does not create a new checkpoint record, mar
 
 ## Choose your client
 
-Both adapters use the included core. They can share a ledger on the same host when configured with the same state directory; their conversation bindings remain separate.
+All three adapters run the same core and stdio MCP server. They can share one ledger on a host when configured with the same state directory; their conversation bindings stay separate.
 
-| | Codex | Hermes |
-| --- | --- | --- |
-| Installation | Local plugin marketplace | Native standalone plugin and a local MCP router |
-| Binding identity | Native thread metadata | Runtime conversation identity and authenticated router channels |
-| After compaction | Native hook context | Request middleware on the next eligible model request |
-| During tool continuation | Separate model context after the tool | Advisory appended to the existing completed tool result |
-| Model request support | Native local Codex hook runtime | Chat Completions projection |
+| | Codex | Claude Code | Hermes |
+| --- | --- | --- | --- |
+| Installation | Local plugin marketplace | Local plugin marketplace | Native standalone plugin and a local MCP router |
+| Binding identity | Native thread metadata | One identity per MCP process, so per session | Runtime conversation identity and authenticated router channels |
+| After compaction | Native hook context | `SessionStart` (`compact`) hook context | Request middleware on the next eligible model request |
+| During tool continuation | Separate model context after the tool | Separate hook context after the tool | Advisory appended to the existing completed tool result |
+| Model request support | Native local Codex hook runtime | Native Claude Code `mcp_tool` hooks | Chat Completions projection |
+
+The core and tool definitions contain no client-specific code. The server picks a client profile from two environment variables that the generated descriptors set:
+
+| Variable | Effect |
+| --- | --- |
+| `CAMPAIGN_HARNESS` | Client name, for example `codex` or `claude`. `codex` takes identity from native `_meta.threadId`; any other name gets a per-process identity. `campaign_bind` records this name as the client. |
+| `CAMPAIGN_CONTEXT_HOOKS=1` | Enables the reminder callback and per-conversation binding. |
+| neither | Default 14-tool contract with caller-supplied identity, used behind the Hermes router. |
+
+`CODEX_CAMPAIGN_CONTEXT_HOOKS=1` still works as the older spelling of the Codex profile. An invalid combination stops the server with exit code 2.
 
 See [compatibility and verification](docs/compatibility.md) for tested versions and limits. Hermes's Anthropic Messages and Codex Responses request modes currently receive no reminder. Its tools remain usable independently of the reminder projection.
 
@@ -70,7 +80,7 @@ The research and engineering profiles rely on two skill libraries maintained by 
 | `research_delivery` (default) | Both |
 | `status_only` | Neither |
 
-[Dependencies](docs/dependencies.md) gives the tested releases and the install commands for Hermes and Codex; [`dependencies.json`](dependencies.json) is the machine-readable copy.
+[Dependencies](docs/dependencies.md) gives the tested releases and the install commands for Hermes and Codex (both projects document their own Claude Code route); [`dependencies.json`](dependencies.json) is the machine-readable copy.
 
 A profile declares which skills a campaign expects; the agent still has to load and follow them. The ledger does not show whether the agent applied a research method correctly or reviewed evidence thoroughly. Pick the profile that matches the work rather than applying research requirements to every task.
 
@@ -91,11 +101,12 @@ campaign-manager init
 
 These commands work in PowerShell and POSIX shells. Archives attached to a [GitHub release](https://github.com/iprawiranegara/agent-campaign-manager/releases) install the same way. [Shell and PowerShell installers](docs/install.md) wrap the same archive.
 
-`init` explicitly creates an empty ledger. It creates no sample campaigns and retains existing compatible campaigns. The default ledger folder is named `omo-research`, after the project the schema comes from. An incompatible database stops setup. Use `--state-dir` to select another absolute directory consistently for every command.
+`init` explicitly creates an empty ledger. Set `CAMPAIGN_STATE_DIR` or pass `--state-dir` to choose its directory; `CODEX_RESEARCH_CAMPAIGN_STATE_DIR` is still read as an older alias. It creates no sample campaigns and retains existing compatible campaigns. The default ledger folder is named `omo-research`, after the project the schema comes from. An incompatible database stops setup. Use `--state-dir` to select another absolute directory consistently for every command.
 
 Then follow the client guide:
 
 - **[Codex installation](docs/install-codex.md):** run `campaign-manager prepare codex`, add the generated local marketplace, and review the hooks.
+- **[Claude Code installation](docs/install-claude.md):** run `campaign-manager prepare claude`, add the generated marketplace, install `agent-campaign-manager@campaign-manager`, and start a new session.
 - **[Hermes installation](docs/install-hermes.md):** run `campaign-manager prepare hermes`, review its configuration fragment, and enable it in the selected profile.
 
 Preparation generates standalone installation files outside the npm package. Hook trust and client activation are explicit. Existing output directories are preserved; choose a new `--output` for an update.

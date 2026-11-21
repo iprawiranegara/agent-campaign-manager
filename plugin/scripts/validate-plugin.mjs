@@ -10,7 +10,7 @@ const readJson = async (path) => JSON.parse(await readFile(join(root, path), "ut
 
 const manifest = await readJson(".codex-plugin/plugin.json");
 const packageManifest = await readJson("package.json");
-assert.equal(manifest.name, "codex-research-campaign");
+assert.equal(manifest.name, "agent-campaign-manager");
 assert.match(manifest.version, /^\d+\.\d+\.\d+$/);
 assert.equal(manifest.version, packageManifest.version, "plugin descriptor and npm package versions must match");
 assert.equal(manifest.skills, "./skills/");
@@ -24,8 +24,9 @@ const mcp = await readJson(".mcp.example.json");
 const server = mcp.mcpServers?.["research-campaign"];
 assert.ok(server, "research-campaign MCP entry is required");
 assert.ok(server.command === "node" || /(?:^|[\\/])node(?:\.exe)?$/i.test(server.command));
-assert.deepEqual(server.args, ["packages/codex-mcp/src/server.mjs"]);
-assert.equal(server.env.CODEX_CAMPAIGN_CONTEXT_HOOKS, '1');
+assert.deepEqual(server.args, ["packages/mcp-server/src/server.mjs"]);
+assert.equal(server.env.CAMPAIGN_HARNESS, 'codex');
+assert.equal(server.env.CAMPAIGN_CONTEXT_HOOKS, '1');
 const hooks = await readJson('hooks/hooks.json');
 for (const event of ['SessionStart', 'PostToolUse', 'UserPromptSubmit']) {
   const groups = hooks.hooks[event];
@@ -37,7 +38,7 @@ for (const event of ['SessionStart', 'PostToolUse', 'UserPromptSubmit']) {
   assert.equal(handler.input.event, event);
 }
 assert.equal(hooks.hooks.SessionStart[0].matcher, '^compact$');
-await access(join(root, 'packages/codex-mcp/src/hook-context.mjs'));
+await access(join(root, 'packages/mcp-server/src/hook-context.mjs'));
 
 for (const skillName of ["campaign-orchestrator", "campaign-discovery", "campaign-research-governance", "campaign-execution-governance", "campaign-finish"]) {
   const skillPath = join("skills", skillName, "SKILL.md");

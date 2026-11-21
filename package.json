@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "license": "MIT",
-  "description": "Durable task continuity for Hermes and Codex.",
+  "description": "Durable task continuity for Codex, Claude Code and Hermes.",
   "files": [
     "bin/",
     "scripts/",

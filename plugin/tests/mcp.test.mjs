@@ -9,7 +9,7 @@ import { test } from "node:test";
 import { openSqlite } from "../packages/campaign-core/src/sqlite.mjs";
 
 const packageRoot = join(import.meta.dirname, "..");
-const serverPath = join(packageRoot, "packages/codex-mcp/src/server.mjs");
+const serverPath = join(packageRoot, "packages/mcp-server/src/server.mjs");
 
 function startServer(stateDir, executable = serverPath) {
   const child = spawn(process.execPath, [executable], {
@@ -56,7 +56,7 @@ test("unexpected tool failures report uncertain outcomes even after a successful
   fixture.close();
   const shimPath = join(directory, "tools-shim.mjs");
   const testServer = join(directory, "server.mjs");
-  const originalTools = pathToFileURL(join(packageRoot, "packages/codex-mcp/src/tools.mjs")).href;
+  const originalTools = pathToFileURL(join(packageRoot, "packages/mcp-server/src/tools.mjs")).href;
   const originalCore = pathToFileURL(join(packageRoot, "packages/campaign-core/src/core.mjs")).href;
   await writeFile(shimPath, `import { invokeTool as realInvoke, TOOL_DEFINITIONS } from ${JSON.stringify(originalTools)};\nexport { TOOL_DEFINITIONS };\nexport function invokeTool(store, name, args, session) { if (name === 'campaign_search') throw new Error('TEST_SECRET_MARKER'); const result = realInvoke(store, name, args, session); if (name === 'campaign_update') throw new Error('TEST_SECRET_MARKER'); return result; }\n`);
   const serverSource = (await readFile(serverPath, "utf8"))

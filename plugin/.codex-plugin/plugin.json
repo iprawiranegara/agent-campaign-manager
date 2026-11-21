@@ -1,5 +1,5 @@
 {
-  "name": "codex-research-campaign",
+  "name": "agent-campaign-manager",
   "version": "0.2.0",
   "description": "Durable state and handoffs for long-running Codex research, engineering, and other substantial campaigns.",
   "author": {
@@ -15,7 +15,7 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Codex Campaign Manager",
+    "displayName": "Agent Campaign Manager",
     "shortDescription": "Track long-running research, engineering, and other substantial campaigns.",
     "longDescription": "A local-first Codex campaign record for substantial work. It keeps campaign identity separate from phases, carries bounded work packages across sessions, and records receipts and parent decisions for reconciliation. It supports continuity without replacing the lead's responsibility to keep the whole campaign moving.",
     "developerName": "Izzu Prawiranegara",

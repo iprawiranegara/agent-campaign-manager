@@ -57,7 +57,7 @@ test('help and version are available without touching campaign state', async () 
   const help = run(['--help'], { CODEX_RESEARCH_CAMPAIGN_STATE_DIR: join(dir, 'state') });
   assert.equal(help.status, 0, help.stderr);
   assert.match(help.stdout, /init/);
-  assert.match(help.stdout, /prepare <codex\|hermes>/);
+  assert.match(help.stdout, /prepare <codex\|claude\|hermes>/);
   assert.match(help.stdout, /dashboard/);
 
   const version = run(['--version'], { CODEX_RESEARCH_CAMPAIGN_STATE_DIR: join(dir, 'state') });
@@ -97,7 +97,7 @@ test('prepare codex keeps a stable explicit output and does not overwrite it', a
   const prepared = run(['prepare', 'codex', '--state-dir', state, '--output', out]);
   assert.equal(prepared.status, 0, prepared.stderr);
   const config = JSON.parse(await readFile(join(out, 'plugin', '.mcp.json'), 'utf8'));
-  assert.equal(config.mcpServers['research-campaign'].env.CODEX_RESEARCH_CAMPAIGN_STATE_DIR, state);
+  assert.equal(config.mcpServers['research-campaign'].env.CAMPAIGN_STATE_DIR, state);
   const marker = join(out, 'reviewed-by-owner.txt');
   await writeFile(marker, 'preserve');
   const duplicate = run(['prepare', 'codex', '--state-dir', state, '--output', out]);

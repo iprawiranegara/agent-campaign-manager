@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { CampaignError, createStore } from "../packages/campaign-core/src/core.mjs";
-import { invokeTool } from "../packages/codex-mcp/src/tools.mjs";
+import { invokeTool } from "../packages/mcp-server/src/tools.mjs";
 
 test("two independent writers reject a stale expected version without a second event", async () => {
   const directory = await mkdtemp(join(tmpdir(), "codex-research-contention-"));

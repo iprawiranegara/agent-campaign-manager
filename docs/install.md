@@ -1,6 +1,6 @@
 # Install the command
 
-Install Node.js 24+ using your normal platform installer. Hermes and Codex are separate applications. Campaign Manager does not install or update them.
+Install Node.js 24+ using your normal platform installer. Codex, Claude Code and Hermes are separate applications. Campaign Manager does not install or update them.
 
 The default campaign profile also expects [Superpowers](https://github.com/obra/superpowers) and [Co-Researcher](https://github.com/poemswe/co-researcher) in the client. Install them from upstream using [dependencies](dependencies.md), or use the `status_only` profile, which needs neither.
 
@@ -40,19 +40,21 @@ Both accept an HTTPS archive URL, such as a release asset. Supply the SHA-256 fr
 
 ```sh
 campaign-manager prepare codex
+campaign-manager prepare claude
 campaign-manager prepare hermes
 ```
 
-Each prints its generated locations and the next activation steps. The files are standalone; keep their directories in place while the client uses them. Follow the [Codex](install-codex.md) and [Hermes](install-hermes.md) guides to review configuration and activate the plugin.
+Each prints its generated locations and the next activation steps. The files are standalone; keep their directories in place while the client uses them. Follow the [Codex](install-codex.md), [Claude Code](install-claude.md) and [Hermes](install-hermes.md) guides to review configuration and activate the plugin.
 
 ## State selection
 
 All CLI commands use the same order:
 
 1. Explicit `--state-dir`.
-2. `CODEX_RESEARCH_CAMPAIGN_STATE_DIR`.
-3. `XDG_STATE_HOME` plus `omo-research`.
-4. The user's home directory plus `.local/state/omo-research`.
+2. `CAMPAIGN_STATE_DIR`.
+3. `CODEX_RESEARCH_CAMPAIGN_STATE_DIR` (older alias).
+4. `XDG_STATE_HOME` plus `omo-research`.
+5. The user's home directory plus `.local/state/omo-research`.
 
 Use an absolute path. Generated client descriptors pin the selected path. `init` is explicit; opening the dashboard or preparing a client never invents another database. Sharing a ledger is supported for clients on the same host. Cross-machine file synchronization and translated scope identities are outside this package.
 

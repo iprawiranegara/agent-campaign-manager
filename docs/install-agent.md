@@ -27,6 +27,7 @@ Select one absolute state directory consistently. Initialize it explicitly with 
 Follow the complete guide for the selected client:
 
 - [Codex](install-codex.md): prepare a stable standalone installation, register its local marketplace/plugin, and complete the native hook review and tool-access steps.
+- [Claude Code](install-claude.md): prepare a standalone installation, add its marketplace, install `agent-campaign-manager@campaign-manager`, and verify in a new session.
 - [Hermes](install-hermes.md): prepare for the actual profile, expose the plugin, merge the generated configuration into existing mappings, then run doctor and enable it through Hermes.
 
 Use the generated paths and printed next actions. Keep client payloads outside temporary directories and the npm cache. Choose a new output directory for an upgrade. Use the host's normal consent flow; report any step that requires a human action. Service restarts and remote exposure need the user's authorization for those actions.

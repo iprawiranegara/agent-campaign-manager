@@ -1,22 +1,54 @@
 #!/usr/bin/env node
 
+import { randomUUID } from "node:crypto";
 import readline from "node:readline";
 import { CampaignError, createStore } from "../../campaign-core/src/core.mjs";
 import { invokeTool, TOOL_DEFINITIONS } from "./tools.mjs";
 
 const SERVER_VERSION = "0.2.0";
+const SERVER_NAME = "agent-campaign-manager";
+
+// Harness profile. Each client's MCP definition names its harness; the core never does.
+// CODEX_CAMPAIGN_CONTEXT_HOOKS=1 is the legacy spelling of CAMPAIGN_HARNESS=codex + CAMPAIGN_CONTEXT_HOOKS=1.
+// Without context hooks the server keeps the default contract (Hermes supplies its own runtime identity).
+function harnessProfile(env) {
+  const legacyCodex = env.CODEX_CAMPAIGN_CONTEXT_HOOKS === '1';
+  const hooks = legacyCodex || env.CAMPAIGN_CONTEXT_HOOKS === '1';
+  const declared = env.CAMPAIGN_HARNESS ? String(env.CAMPAIGN_HARNESS) : null;
+  if (declared !== null && !/^[a-z][a-z0-9-]{0,31}$/u.test(declared))
+    throw new Error(`CAMPAIGN_HARNESS must match ^[a-z][a-z0-9-]{0,31}$; got ${JSON.stringify(declared)}`);
+  if (legacyCodex && declared !== null && declared !== 'codex')
+    throw new Error(`CODEX_CAMPAIGN_CONTEXT_HOOKS=1 conflicts with CAMPAIGN_HARNESS=${declared}`);
+  const harness = declared ?? (legacyCodex ? 'codex' : null);
+  if (hooks && harness === null) throw new Error('CAMPAIGN_CONTEXT_HOOKS=1 requires CAMPAIGN_HARNESS');
+  if (!hooks) return { hooks: false, harness };
+  // Harnesses that put a conversation id in tools/call _meta. Every other harness
+  // runs one stdio server process per session, so the process is the conversation.
+  const nativeThread = { codex: 'threadId' }[harness] ?? null;
+  return { hooks: true, harness, nativeThread,
+    processIdentity: nativeThread ? null : `${harness}-process-${randomUUID()}` };
+}
+
+let profile;
+try { profile = harnessProfile(process.env); }
+catch (error) { process.stderr.write(`${SERVER_NAME}: ${error.message}\n`); process.exit(2); }
+
 const store = createStore();
 const session = { binding_token: null };
-// Opt in only from Codex's MCP definition. Hermes retains the default contract.
-const hookAdapter = process.env.CODEX_CAMPAIGN_CONTEXT_HOOKS === '1'
-  ? await import('./hook-context.mjs') : null;
+const hookAdapter = profile.hooks ? await import('./hook-context.mjs') : null;
 const threadContexts = new Map();
 
-function nativeThreadContext(params) {
-  const threadId = params?._meta?.threadId;
+function runtimeIdentity(params) {
+  if (!profile.nativeThread) return profile.processIdentity;
+  const threadId = params?._meta?.[profile.nativeThread];
   if (typeof threadId !== 'string' || !threadId.trim() || threadId.length > 200) {
-    throw new CampaignError('CAMPAIGN_RUNTIME_IDENTITY_REQUIRED', 'Native Codex thread metadata is required; no campaign was selected.', { mutated: false });
+    throw new CampaignError('CAMPAIGN_RUNTIME_IDENTITY_REQUIRED', `Native ${profile.harness} conversation metadata is required; no campaign was selected.`, { mutated: false });
   }
+  return threadId;
+}
+
+function runtimeContext(params) {
+  const threadId = runtimeIdentity(params);
   if (!threadContexts.has(threadId)) threadContexts.set(threadId, {
     store: createStore(), session: { binding_token: null }, hook: {}, threadId,
   });
@@ -73,7 +105,7 @@ function handle(request) {
       return response(id, {
         protocolVersion: request.params?.protocolVersion || "2025-06-18",
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "codex-research-campaign", version: SERVER_VERSION },
+        serverInfo: { name: SERVER_NAME, version: SERVER_VERSION },
         instructions: "Campaign mode starts UNBOUND. Use campaign_list or campaign_search, inspect one campaign with campaign_detail, and bind it with campaign_bind after owner selection. Use campaign_status only after binding. Create a new record with campaign_create; it does not bind the session. Finish with campaign_finish, intentionally terminate with campaign_abandon, and clear only this session binding with campaign_unbind. campaign_open, campaign_resume, and campaign_close are retired and return DEPRECATED_TOOL. Binding never reloads hooks or changes the plugin manifest.",
       });
     }
@@ -85,14 +117,14 @@ function handle(request) {
       const args = request.params?.arguments || {};
       try {
         if (hookAdapter) {
-          if (name === hookAdapter.CONTEXT_TOOL.name && !request.params?._meta?.threadId)
+          if (name === hookAdapter.CONTEXT_TOOL.name && profile.nativeThread && !request.params?._meta?.[profile.nativeThread])
             return response(id, toolResult({}));
-          const context = nativeThreadContext(request.params);
+          const context = runtimeContext(request.params);
           if (name === hookAdapter.CONTEXT_TOOL.name) return response(id, toolResult(
             hookAdapter.contextHook(context.store, context.hook, args, context.threadId, context.session.binding_token),
           ));
           const actualArgs = name === 'campaign_bind' && args && typeof args === 'object' && !Array.isArray(args)
-            ? { ...args, thread_id: context.threadId, client: 'codex' } : args;
+            ? { ...args, thread_id: context.threadId, client: profile.harness } : args;
           return response(id, toolResult(invokeTool(context.store, name, actualArgs, context.session)));
         }
         return response(id, toolResult(invokeTool(store, name, args, session)));

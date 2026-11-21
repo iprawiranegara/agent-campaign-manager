@@ -66,7 +66,7 @@ const runStatus = [
   "SUPERSEDED",
 ].map((value) => `'${value}'`).join(", ");
 
-/** The OMO schema is duplicated deliberately: OMO and Codex share state, not executable source. */
+/** The OMO schema is duplicated deliberately: OMO and the campaign adapters share state, not executable source. */
 export const SCHEMA_V1_SQL = `
 CREATE TABLE IF NOT EXISTS schema_migration (
   version INTEGER PRIMARY KEY,

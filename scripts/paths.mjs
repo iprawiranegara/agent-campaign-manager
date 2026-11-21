@@ -14,9 +14,10 @@ function absolutePath(value, label, path) {
 
 export function resolveCampaignStateDir({ env = process.env, home = homedir(), platform = process.platform } = {}) {
   const path = pathApi(platform);
-  const override = env.CODEX_RESEARCH_CAMPAIGN_STATE_DIR;
-  if (override !== undefined && override !== '') {
-    return absolutePath(override, 'CODEX_RESEARCH_CAMPAIGN_STATE_DIR', path);
+  // CAMPAIGN_STATE_DIR is the current name; CODEX_RESEARCH_CAMPAIGN_STATE_DIR is accepted as a legacy alias.
+  for (const name of ['CAMPAIGN_STATE_DIR', 'CODEX_RESEARCH_CAMPAIGN_STATE_DIR']) {
+    const override = env[name];
+    if (override !== undefined && override !== '') return absolutePath(override, name, path);
   }
   const xdgStateHome = env.XDG_STATE_HOME;
   if (xdgStateHome !== undefined && xdgStateHome !== '') {
@@ -40,7 +41,7 @@ export function resolveHermesHome({ env = process.env, home = homedir(), platfor
 }
 
 export function resolveClientInstallDir(client, { env = process.env, home = homedir(), platform = process.platform } = {}) {
-  if (!['codex', 'hermes'].includes(client)) throw new Error(`Unknown client: ${client}`);
+  if (!['codex', 'claude', 'hermes'].includes(client)) throw new Error(`Unknown client: ${client}`);
   const path = pathApi(platform);
   let dataHome;
   if (platform === 'win32') {

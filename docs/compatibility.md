@@ -8,10 +8,11 @@ The 0.2.0 release targets native Windows, Linux and macOS. Node 24+ is the basel
 | --- | --- |
 | Shared core | SQLite identity/version rules, receipts, reconciliation and finish protections in the included Node suite. |
 | Codex | Local plugin marketplace and native hooks with CLI/app-server 0.167.0. |
+| Claude Code | Local plugin marketplace, plugin MCP server and `mcp_tool` hooks with Claude Code 2.1.330 on Linux. |
 | Hermes | Native general-plugin APIs at Linux source revision `cb224ae2ffcd2b91f041fa1cf6333e05a2176261`, plus isolated router/bridge/reminder tests. Windows host verification is recorded below. |
 | Providers | No provider-specific API key is required by this package. Reminder text uses the provider already configured in the host. |
 
-Codex must support native `_meta.threadId` forwarding and MCP-tool hooks. Hermes must expose the documented general-plugin SDK and runtime metadata. Install discovery alone does not prove those paths.
+Codex must support native `_meta.threadId` forwarding and MCP-tool hooks. Claude Code must support plugin marketplaces, `${CLAUDE_PLUGIN_ROOT}` in plugin MCP descriptors and `mcp_tool` hooks. Hermes must expose the documented general-plugin SDK and runtime metadata. Install discovery alone does not prove those paths.
 
 Native Windows channel protection uses Windows PowerShell 5.1+ and NTFS ownership/access-control APIs. Linux and macOS retain POSIX permission checks. An insecure channel directory/key or failed security check rejects dispatch. The shared core rejects paths outside scope using native path separators.
 
@@ -47,9 +48,22 @@ Windows tests used a new private per-user temporary root. On the Windows test ho
 
 Native component checks are separate from enabling the plugin in an existing desktop conversation.
 
+## Claude Code adapter verification (Linux)
+
+Run on Linux with Node 24.18.0 and Claude Code 2.1.330, after the harness-neutral server change:
+
+| Boundary | Observed result |
+| --- | --- |
+| Node suite | 94 tests: 92 passed, zero failed, two skips (Windows-only installer check, external OMO adapter). |
+| Hermes suite | 34 passed, six skips. |
+| Validation | `npm run validate` and `claude plugin validate` on the generated marketplace and plugin passed. |
+| Live Claude Code session | `prepare claude` output loaded with `--plugin-dir` against a disposable ledger: 15 campaign tools and 7 skills discovered; bind recorded `client: claude` with a per-process identity although the model supplied another `thread_id`; after `/compact` the `SessionStart` hook delivered the campaign checkpoint and the model quoted it. |
+
+Not yet run for this change: CI on Windows and macOS, a native Windows Claude Code session, and `claude plugin install` from a published marketplace. The Codex and Hermes records above predate the server change; their adapters were re-run through the Node and Hermes suites only.
+
 ## Reminder modes
 
-Codex uses native local hook context after compaction/tools. It does not append inside the original tool result. Hosted cloud-only execution and generic MCP clients without native thread identity are not certified.
+Codex and Claude Code use native local hook context after compaction/tools. Neither appends inside the original tool result. Hosted cloud-only execution is not certified. Other MCP clients can use a per-process profile through `CAMPAIGN_HARNESS=<name>`; only Codex and Claude Code have been tested.
 
 Hermes projects reminders only for `chat_completions`. It preserves final existing user/tool roles. `anthropic_messages` and `codex_responses` currently receive no reminder. An Anthropic model routed through a Chat Completions gateway can use the supported projection; the model name alone does not establish the request format.
 

@@ -51,6 +51,7 @@ jobs:
           mkdir -m 700 "$private_state"
           XDG_STATE_HOME="$private_state" node "$cli" init
           XDG_STATE_HOME="$private_state" node "$cli" prepare codex --output "$state/codex"
+          XDG_STATE_HOME="$private_state" node "$cli" prepare claude --output "$state/claude"
       - if: runner.os == 'Windows'
         shell: pwsh
         run: |
@@ -95,6 +96,7 @@ jobs:
           $env:CODEX_RESEARCH_CAMPAIGN_STATE_DIR = $privateState
           node $cli init
           node $cli prepare codex --output (Join-Path $stateRoot 'codex')
+          node $cli prepare claude --output (Join-Path $stateRoot 'claude')
 
   browser:
     runs-on: ubuntu-latest

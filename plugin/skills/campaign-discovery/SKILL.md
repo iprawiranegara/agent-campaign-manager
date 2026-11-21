@@ -1,6 +1,6 @@
 ---
 name: campaign-discovery
-description: Discover, inspect, create, and explicitly bind the owner-selected campaign for the current Codex session.
+description: Discover, inspect, create, and explicitly bind the owner-selected campaign for the current agent session.
 ---
 
 # Campaign discovery and binding

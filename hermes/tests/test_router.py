@@ -217,3 +217,11 @@ def test_router_keeps_hermes_contract_when_codex_hook_mode_is_inherited(tmp_path
     try:
         assert r.data('campaign_list')['campaigns']==[]
     finally:r.close()
+
+def test_router_keeps_hermes_contract_when_harness_hook_mode_is_inherited(tmp_path,monkeypatch):
+    monkeypatch.setenv('CAMPAIGN_HARNESS','claude')
+    monkeypatch.setenv('CAMPAIGN_CONTEXT_HOOKS','1')
+    r=Router(tmp_path)
+    try:
+        assert r.data('campaign_list')['campaigns']==[]
+    finally:r.close()

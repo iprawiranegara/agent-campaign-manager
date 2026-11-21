@@ -18,7 +18,7 @@ async function fixture(run, objective = 'Only this campaign objective') {
   const alpha = seed.create({ campaign_id: 'alpha-private', objective, scope_roots: [scope], actor: 'owner' });
   const beta = seed.create({ campaign_id: 'beta-private', objective: 'Beta exclusive objective', scope_roots: [scope], actor: 'owner' });
   seed.dispose();
-  const child = spawn(process.execPath, [join(root, 'packages/codex-mcp/src/server.mjs')], {
+  const child = spawn(process.execPath, [join(root, 'packages/mcp-server/src/server.mjs')], {
     cwd: root, env: { ...process.env, CODEX_RESEARCH_CAMPAIGN_STATE_DIR: stateDir, CODEX_CAMPAIGN_CONTEXT_HOOKS: '1' },
     stdio: ['pipe', 'pipe', 'pipe'],
   });

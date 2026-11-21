@@ -7,7 +7,7 @@ import { homedir } from 'node:os';
 import { dirname, join, resolve, relative, isAbsolute, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import readline from 'node:readline';
-import { TOOL_DEFINITIONS } from '../plugin/packages/codex-mcp/src/tools.mjs';
+import { TOOL_DEFINITIONS } from '../plugin/packages/mcp-server/src/tools.mjs';
 import { verifyPrivatePath } from './security.mjs';
 
 const SOURCE = resolve(dirname(fileURLToPath(import.meta.url)), '../plugin');
@@ -18,7 +18,7 @@ const channelsArgument = option('--channels');
 const channels = verifyPrivatePath(channelsArgument, 'directory');
 const state = realpathSync(option('--state'));
 const fixture = argv.includes('--fixture');
-const productionPath = resolve(process.env.CODEX_RESEARCH_CAMPAIGN_STATE_DIR || join(process.env.XDG_STATE_HOME || join(homedir(), '.local/state'), 'omo-research'));
+const productionPath = resolve(process.env.CAMPAIGN_STATE_DIR || process.env.CODEX_RESEARCH_CAMPAIGN_STATE_DIR || join(process.env.XDG_STATE_HOME || join(homedir(), '.local/state'), 'omo-research'));
 // Compare canonical paths: `state` is canonical, and macOS temp/home paths often pass through symlinks.
 let production = productionPath;
 try { production = realpathSync(productionPath); } catch {}
@@ -80,7 +80,7 @@ function terminate(entry) {
 function childFor(key) {
   if (sessions.has(key)) return sessions.get(key);
   if (sessions.size >= maxSessions) throw new Error('CAPACITY');
-  const child = spawn(process.execPath, [SOURCE + '/packages/codex-mcp/src/server.mjs'], {cwd: SOURCE, env: {...process.env, CODEX_RESEARCH_CAMPAIGN_STATE_DIR: state, CODEX_CAMPAIGN_CONTEXT_HOOKS: '0'}, stdio: ['pipe','pipe','ignore']});
+  const child = spawn(process.execPath, [SOURCE + '/packages/mcp-server/src/server.mjs'], {cwd: SOURCE, env: {...process.env, CAMPAIGN_STATE_DIR: state, CODEX_RESEARCH_CAMPAIGN_STATE_DIR: '', CAMPAIGN_HARNESS: '', CAMPAIGN_CONTEXT_HOOKS: '', CODEX_CAMPAIGN_CONTEXT_HOOKS: ''}, stdio: ['pipe','pipe','ignore']});
   const entry = {child, dead: false, binding: null, pending: new Map(), queue: Promise.resolve()};
   readline.createInterface({input: child.stdout}).on('line', line => {
     try {

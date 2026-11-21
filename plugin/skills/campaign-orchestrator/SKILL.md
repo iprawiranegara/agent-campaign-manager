@@ -1,6 +1,6 @@
 ---
 name: campaign-orchestrator
-description: Coordinate substantial research, engineering, and other Codex campaigns through durable work packages, receipts, and parent reconciliation.
+description: Coordinate substantial research, engineering, and other substantial agent campaigns through durable work packages, receipts, and parent reconciliation.
 ---
 
 # Campaign orchestrator

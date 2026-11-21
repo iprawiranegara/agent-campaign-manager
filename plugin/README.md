@@ -1,7 +1,7 @@
-# Codex adapter and shared core
+# Shared core, MCP server and client plugins
 
-This directory contains the Codex plugin's manifest, skills, hooks, MCP server and shared campaign core. Generate a local installation descriptor before installing it; the source `.mcp.example.json` is illustrative and is not a configured host connection.
+This directory contains the shared campaign core (`packages/campaign-core/`), the stdio MCP server (`packages/mcp-server/`), the campaign skills and the plugin manifests. `campaign-manager prepare codex` and `campaign-manager prepare claude` copy it into a standalone installation and generate the client-specific descriptor, manifest and hooks there. The source `.mcp.example.json` is illustrative and is not a configured host connection.
 
-See the repository [README](../README.md), [Codex installation](../docs/install-codex.md), [usage](../docs/usage.md) and [architecture](../docs/architecture.md).
+See the repository [README](../README.md), [Codex installation](../docs/install-codex.md), [Claude Code installation](../docs/install-claude.md), [usage](../docs/usage.md) and [architecture](../docs/architecture.md).
 
-The opt-in native Codex server exposes a read-only reminder callback and isolates bindings by runtime thread metadata. Its default 14-tool contract is retained for the Hermes router. Both modes use the same ledger semantics.
+The server reads `CAMPAIGN_HARNESS` and `CAMPAIGN_CONTEXT_HOOKS`. In hook mode it exposes a read-only reminder callback and isolates bindings: by native thread metadata for `codex`, by server process for other clients. Without them it keeps the default 14-tool contract used behind the Hermes router. All modes use the same ledger semantics.

@@ -1,16 +1,17 @@
 #!/usr/bin/env node
-import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createStore } from '../plugin/packages/campaign-core/src/core.mjs';
 import { resolveClientInstallDir, resolveHermesHome } from './paths.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const usage = 'Usage: node scripts/setup.mjs <init|codex|hermes> --state-dir <absolute-directory> [--output <absolute-directory>] [--hermes-home <absolute-profile>]';
+const PLUGIN_NAME = 'agent-campaign-manager';
+const usage = 'Usage: node scripts/setup.mjs <init|codex|claude|hermes> --state-dir <absolute-directory> [--output <absolute-directory>] [--hermes-home <absolute-profile>]';
 
 function parseArgs(argv) {
   const [action, ...optionsArgv] = argv;
-  if (!['init', 'codex', 'hermes'].includes(action)) throw new Error(usage);
+  if (!['init', 'codex', 'claude', 'hermes'].includes(action)) throw new Error(usage);
   const options = {};
   for (let i = 0; i < optionsArgv.length; i += 2) {
     const key = optionsArgv[i];
@@ -22,7 +23,7 @@ function parseArgs(argv) {
   }
   if (!options['--state-dir']) throw new Error(`An explicit --state-dir is required. ${usage}`);
   if (action === 'init' && (options['--output'] || options['--hermes-home'])) throw new Error(usage);
-  if (action === 'codex' && options['--hermes-home']) throw new Error(usage);
+  if (action !== 'hermes' && options['--hermes-home']) throw new Error(usage);
   return { action, options };
 }
 
@@ -52,7 +53,7 @@ async function runSetup(argv) {
       created: !databaseExists,
       campaign_count: campaignCount,
       next_actions: [
-        'Run campaign-manager prepare codex or campaign-manager prepare hermes to generate reviewable client files.',
+        'Run campaign-manager prepare codex, campaign-manager prepare claude or campaign-manager prepare hermes to generate reviewable client files.',
         'Run campaign-manager dashboard after initialization to view campaigns locally.',
       ],
     }));
@@ -89,9 +90,9 @@ async function runSetup(argv) {
       mcpServers: {
         'research-campaign': {
           command: process.execPath,
-          args: ['packages/codex-mcp/src/server.mjs'],
+          args: ['packages/mcp-server/src/server.mjs'],
           cwd: join(output, 'plugin'),
-          env: { CODEX_CAMPAIGN_CONTEXT_HOOKS: '1', CODEX_RESEARCH_CAMPAIGN_STATE_DIR: state },
+          env: { CAMPAIGN_HARNESS: 'codex', CAMPAIGN_CONTEXT_HOOKS: '1', CAMPAIGN_STATE_DIR: state },
         },
       },
     });
@@ -99,7 +100,7 @@ async function runSetup(argv) {
       name: 'campaign-manager',
       interface: { displayName: 'Campaign Manager' },
       plugins: [{
-        name: 'codex-research-campaign',
+        name: PLUGIN_NAME,
         source: { source: 'local', path: './plugin' },
         policy: { installation: 'AVAILABLE', authentication: 'ON_INSTALL' },
         category: 'Productivity',
@@ -111,8 +112,59 @@ async function runSetup(argv) {
       state_dir: state,
       next_actions: [
         `Review the generated marketplace at ${join(output, '.agents/plugins/marketplace.json')} and MCP descriptor at ${join(output, 'plugin', '.mcp.json')}.`,
-        `Register it with Codex using codex plugin marketplace add "${output}" --json, then codex plugin add codex-research-campaign@campaign-manager --json.`,
+        `Register it with Codex using codex plugin marketplace add "${output}" --json, then codex plugin add ${PLUGIN_NAME}@campaign-manager --json.`,
         'Review hook definitions and approvals in Codex; preparation never trusts hooks or edits Codex configuration.',
+      ],
+    }));
+    return;
+  }
+
+  if (action === 'claude') {
+    // Claude Code resolves ${CLAUDE_PLUGIN_ROOT} to the installed (cached) plugin copy.
+    save(join(output, 'plugin', '.mcp.json'), {
+      mcpServers: {
+        'research-campaign': {
+          command: process.execPath,
+          args: ['${CLAUDE_PLUGIN_ROOT}/packages/mcp-server/src/server.mjs'],
+          env: { CAMPAIGN_HARNESS: 'claude', CAMPAIGN_CONTEXT_HOOKS: '1', CAMPAIGN_STATE_DIR: state },
+        },
+      },
+    });
+    const codexManifest = JSON.parse(readFileSync(join(root, 'plugin', '.codex-plugin', 'plugin.json'), 'utf8'));
+    save(join(output, 'plugin', '.claude-plugin', 'plugin.json'), {
+      name: PLUGIN_NAME,
+      version: codexManifest.version,
+      description: 'Durable campaign ledger, skills and post-compaction reminders for long-running Claude Code work.',
+      author: codexManifest.author,
+      license: codexManifest.license,
+      keywords: ['campaign', 'research', 'governance', 'mcp'],
+    });
+    // Same callback as the Codex hooks; Claude names plugin MCP servers plugin:<plugin>:<server>.
+    const handler = (event, statusMessage) => ({
+      type: 'mcp_tool', server: `plugin:${PLUGIN_NAME}:research-campaign`, tool: 'campaign_context_hook',
+      input: event === 'SessionStart' ? { event, source: '${source}' } : { event }, timeout: 5, statusMessage,
+    });
+    save(join(output, 'plugin', 'hooks', 'hooks.json'), {
+      description: 'Read-only reminders for the explicitly bound campaign after compaction.',
+      hooks: {
+        SessionStart: [{ matcher: 'compact', hooks: [handler('SessionStart', 'Refreshing bound campaign context')] }],
+        PostToolUse: [{ hooks: [handler('PostToolUse', 'Checking bound campaign context')] }],
+        UserPromptSubmit: [{ hooks: [handler('UserPromptSubmit', 'Checking bound campaign context')] }],
+      },
+    });
+    save(join(output, '.claude-plugin', 'marketplace.json'), {
+      name: 'campaign-manager',
+      owner: codexManifest.author,
+      plugins: [{ name: PLUGIN_NAME, source: './plugin', description: 'Durable campaign ledger, skills and reminder hooks' }],
+    });
+    console.log(JSON.stringify({
+      output,
+      marketplace: join(output, '.claude-plugin', 'marketplace.json'),
+      state_dir: state,
+      next_actions: [
+        `Review the generated marketplace at ${join(output, '.claude-plugin', 'marketplace.json')}, MCP descriptor at ${join(output, 'plugin', '.mcp.json')} and hooks at ${join(output, 'plugin', 'hooks', 'hooks.json')}.`,
+        `Register it with Claude Code using claude plugin marketplace add "${output}", then claude plugin install ${PLUGIN_NAME}@campaign-manager.`,
+        'Start a new Claude Code session; preparation never edits Claude Code settings.',
       ],
     }));
     return;
@@ -126,7 +178,7 @@ async function runSetup(argv) {
         command: process.execPath,
         args: [join(output, 'hermes/router.mjs'), '--channels', channels, '--state', state],
         cwd: output,
-        env: { CODEX_RESEARCH_CAMPAIGN_STATE_DIR: state },
+        env: { CAMPAIGN_STATE_DIR: state },
         trust: 'untrusted',
         tools: { include: [] },
         resources: false,

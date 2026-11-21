@@ -1,10 +1,15 @@
 # Architecture and data boundaries
 
-The shared core is `plugin/packages/campaign-core/`. It uses Node's built-in SQLite implementation with the inherited OMO schema. Both adapters call `plugin/packages/codex-mcp/src/server.mjs`; campaign rules are implemented once.
+The shared core is `plugin/packages/campaign-core/`. It uses Node's built-in SQLite implementation with the inherited OMO schema. All adapters call `plugin/packages/mcp-server/src/server.mjs`; campaign rules are implemented once, and the core and tool definitions contain no client-specific code.
 
 ```text
 Codex native plugin and MCP-tool hooks
   -> thread-scoped MCP sessions
+  -> shared campaign core
+  -> local SQLite ledger
+
+Claude Code plugin and mcp_tool hooks
+  -> one MCP server process per session (per-process identity)
   -> shared campaign core
   -> local SQLite ledger
 
@@ -24,11 +29,11 @@ Browser dashboard
 
 The database stores campaigns, work packages, receipts, reviewed outcomes and event history. Expected versions protect writes. An opening identity digest covers immutable fields such as objective, charter, accountable primary and scope. The phase is mutable metadata.
 
-Bindings are in-memory session state. Codex scopes stores/tokens by trusted native `_meta.threadId`. Hermes signs the tool, arguments, route, timestamp and nonce with a per-plugin-process private channel key. Its router rejects forgery, replay and stale binding tokens. The model does not supply the trusted routing identity. These controls separate conversations and profiles within the intended host; another process running as the same OS user is outside that boundary.
+Bindings are in-memory session state. The server's client profile comes from `CAMPAIGN_HARNESS` and `CAMPAIGN_CONTEXT_HOOKS`. Codex scopes stores/tokens by trusted native `_meta.threadId`. Claude Code runs one server process per session, so the server assigns that process an identity (`claude-process-<uuid>`) and ignores model-supplied `thread_id`/`client` on bind. Hermes signs the tool, arguments, route, timestamp and nonce with a per-plugin-process private channel key. Its router rejects forgery, replay and stale binding tokens. The model does not supply the trusted routing identity. These controls separate conversations and profiles within the intended host; another process running as the same OS user is outside that boundary.
 
 ## Reminder delivery
 
-Codex enables the reminder adapter explicitly with `CODEX_CAMPAIGN_CONTEXT_HOOKS=1`. Its `SessionStart(compact)` callback activates the current binding; `PostToolUse` and `UserPromptSubmit` read fresh state. A text digest suppresses duplicates retained in native history. Missing identity, unbind, switch, terminal state or a read failure invalidates the active reminder. A new binding requires compaction again.
+Codex and Claude Code enable the reminder callback with `CAMPAIGN_HARNESS=<client>` and `CAMPAIGN_CONTEXT_HOOKS=1` (Codex also accepts the older `CODEX_CAMPAIGN_CONTEXT_HOOKS=1`). Their `SessionStart(compact)` hook activates the current binding; `PostToolUse` and `UserPromptSubmit` read fresh state. A text digest suppresses duplicates retained in native history. Missing identity, unbind, switch, terminal state or a read failure invalidates the active reminder. A new binding requires compaction again.
 
 Hermes uses its runtime compaction event and `llm_request` middleware. For Chat Completions, it appends a labelled advisory to the final existing user message or completed tool result in a copied request. It preserves roles, tool-call IDs, preceding messages and the system prefix. Incomplete tool groups, assistant endings and unsupported content/modes receive no projection. Original transcript messages are not rewritten. A failed read suppresses refresh until another compaction.
 
@@ -40,7 +45,7 @@ The npm package exposes `campaign-manager`. Its `prepare` commands create standa
 
 `init` is the explicit schema-initialization operation. The runtime server opens an existing compatible database and rejects missing/incompatible state. Set the same absolute state directory for both adapters when sharing a ledger is intended. The default convention is `$XDG_STATE_HOME/omo-research`, or `~/.local/state/omo-research` when XDG is unset; generated descriptors instead pin the directory explicitly chosen during setup.
 
-The portable Hermes router uses a relative shared-core import. In normal mode, `--state` must match its configured environment/default state directory. Fixture mode also requires an explicit containment root and rejects production state. It forces its child server into the default 14-tool contract even when Codex hook mode is set in the parent environment.
+The portable Hermes router uses a relative shared-core import. In normal mode, `--state` must match its configured environment/default state directory. Fixture mode also requires an explicit containment root and rejects production state. It forces its child server into the default 14-tool contract by clearing the harness variables, even when a hook profile is set in the parent environment.
 
 ## Permissions and failure behavior
 

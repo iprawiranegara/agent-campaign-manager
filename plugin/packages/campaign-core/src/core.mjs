@@ -322,7 +322,7 @@ function normalizePhase(value) {
       checkpoint: `Legacy phase ${phaseId} normalized to an OMO phase contract`,
       next_gate: "owner-review",
       hard_stops: ["legacy phase string normalized to OMO CampaignPhase"],
-      authority_basis: "Codex campaign core compatibility normalization",
+      authority_basis: "campaign core compatibility normalization",
     };
   }
   return campaignPhase(value, "phase");
@@ -530,8 +530,10 @@ export class CampaignStore {
     const hasDbPath = Object.hasOwn(options, "dbPath") || Object.hasOwn(options, "databasePath");
     const hasStateDir = Object.hasOwn(options, "stateDir");
     const suppliedStateDir = options.stateDir;
-    const explicitEnvironmentState = !hasDbPath && !hasStateDir && process.env.CODEX_RESEARCH_CAMPAIGN_STATE_DIR
-      ? resolve(process.env.CODEX_RESEARCH_CAMPAIGN_STATE_DIR)
+    // CAMPAIGN_STATE_DIR is the neutral name; CODEX_RESEARCH_CAMPAIGN_STATE_DIR is the legacy alias.
+    const environmentStateDir = process.env.CAMPAIGN_STATE_DIR || process.env.CODEX_RESEARCH_CAMPAIGN_STATE_DIR;
+    const explicitEnvironmentState = !hasDbPath && !hasStateDir && environmentStateDir
+      ? resolve(environmentStateDir)
       : null;
     const rawDbPath = options.dbPath ?? options.databasePath ?? (hasStateDir
       ? join(resolve(suppliedStateDir), "campaigns.sqlite3")
@@ -743,7 +745,7 @@ export class CampaignStore {
           if (!payload.charter || typeof payload.charter !== "object" || Array.isArray(payload.charter)) fail("charter_confirmed_invalid", "charter object", payload.charter);
           replay.charter = { ...replay.charter, confirmed_charter: payload.charter };
         } else if (["deliverable_upserted", "gate_updated", "decision_recorded", "risk_recorded"].includes(updateType)) {
-          // These OMO materializations are outside the Codex compatibility
+          // These OMO materializations are outside the campaign-core compatibility
           // surface; their event shape is still part of the durable chain.
         } else {
           fail("event_update_type_unknown", "OMO campaign update type", updateType);
@@ -1199,7 +1201,7 @@ export class CampaignStore {
     charter,
     accountable_primary,
     profile = "research_delivery",
-    client = "codex-desktop",
+    client = "unspecified",
     thread_id: threadId = "unbound",
     parent_thread_id: parentThreadId = null,
     agent_id: agentId = "primary-orchestrator",
@@ -1262,7 +1264,7 @@ export class CampaignStore {
     identity_digest: suppliedDigest,
     actor,
     run_id: runId,
-    client = "codex-desktop",
+    client = "unspecified",
     thread_id: threadId,
     parent_thread_id: parentThreadId = null,
     agent_id: agentId = "primary-orchestrator",

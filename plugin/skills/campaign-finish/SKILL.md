@@ -1,6 +1,6 @@
 ---
 name: campaign-finish
-description: Finish or intentionally abandon a bound Codex research campaign after evidence and reconciliation review.
+description: Finish or intentionally abandon a bound research campaign after evidence and reconciliation review.
 ---
 
 # Campaign finish and abandon

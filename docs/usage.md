@@ -40,7 +40,7 @@ Next permitted actions: campaign_status, campaign_preflight, campaign_receipt
 
 The exact layout differs between adapters. Each reminder is capped at 2,000 characters; long fields/lists are shortened, and an unsafe projection is omitted. The reminder is a current view of the ledger, not a new progress record.
 
-Codex retains native hook context in history. It reads current state after tools/on user prompts but suppresses unchanged text; a changed record or another compaction can emit it again. Hermes projects a fresh advisory onto the final eligible message of each continuation request after compaction. This changes a copied request rather than repeatedly appending to the saved transcript.
+Codex and Claude Code retain hook context in history. They read current state after tools/on user prompts but suppresses unchanged text; a changed record or another compaction can emit it again. Hermes projects a fresh advisory onto the final eligible message of each continuation request after compaction. This changes a copied request rather than repeatedly appending to the saved transcript.
 
 The reminder only knows recorded work. If the agent never writes its progress, the ledger can remain stale. Ask it to record meaningful outcomes as work proceeds.
 
@@ -76,4 +76,4 @@ New client/server processes start unbound, even when they can see previous campa
 | `campaign_update` | Apply a checked lifecycle/phase/package update. |
 | `campaign_finish`, `campaign_abandon` | Record deliberate completion or termination. |
 
-Codex also exposes `campaign_context_hook` as a read-only callback for its native hooks. Ordinary work should use the public operations above; the host invokes the callback at the relevant lifecycle events.
+In hook mode (Codex and Claude Code) the server also exposes `campaign_context_hook` as a read-only callback for the native hooks. Ordinary work should use the public operations above; the host invokes the callback at the relevant lifecycle events.

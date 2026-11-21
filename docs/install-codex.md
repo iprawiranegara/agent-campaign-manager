@@ -12,7 +12,7 @@ Linux/macOS:
 campaign-manager init
 campaign-manager prepare codex --output "$HOME/.local/share/agent-campaign-manager/codex-0.2.0"
 codex plugin marketplace add "$HOME/.local/share/agent-campaign-manager/codex-0.2.0" --json
-codex plugin add codex-research-campaign@campaign-manager --json
+codex plugin add agent-campaign-manager@campaign-manager --json
 codex plugin list --json
 ```
 
@@ -23,17 +23,17 @@ $campaignInstall = Join-Path $env:LOCALAPPDATA 'agent-campaign-manager/codex-0.2
 campaign-manager init
 campaign-manager prepare codex --output $campaignInstall
 codex plugin marketplace add $campaignInstall --json
-codex plugin add codex-research-campaign@campaign-manager --json
+codex plugin add agent-campaign-manager@campaign-manager --json
 codex plugin list --json
 ```
 
 If an output already exists, inspect it and choose another `--output`; preparation does not overwrite an installation. Use the same `--state-dir` on `init`, preparation and the dashboard when selecting a nondefault ledger. Initialization retains compatible campaigns and rejects incompatible schemas. Plugin upgrades do not require restoring an older database.
 
-The generated directory contains a standalone plugin and `.agents/plugins/marketplace.json`. Its MCP descriptor pins the selected Node executable, working directory and state. Keep that directory in place while Codex uses it. From an extracted source tree the original `node scripts/setup.mjs init|codex --state-dir ... --output ...` interface is also available.
+The generated directory contains a standalone plugin and `.agents/plugins/marketplace.json`. Its MCP descriptor pins the selected Node executable, working directory and state, and sets `CAMPAIGN_HARNESS=codex` with `CAMPAIGN_CONTEXT_HOOKS=1`. Keep that directory in place while Codex uses it. From an extracted source tree the original `node scripts/setup.mjs init|codex|claude|hermes --state-dir ... --output ...` interface is also available.
 
 ## 2. Install through Codex
 
-The marketplace is named `campaign-manager`; the Codex plugin retains the identifier `codex-research-campaign`. Keeping that adapter name does not restrict campaigns to research.
+The marketplace is named `campaign-manager` and the plugin `agent-campaign-manager`. Releases before this change used the plugin name `codex-research-campaign`; remove that registration before installing the renamed plugin, and review its hooks again. The ledger is unaffected.
 
 Desktop users can install from the generated local marketplace through the Plugins interface. Refresh the local plugin sources when needed. The installed plugin must belong to the Codex profile used by that desktop connection.
 
@@ -62,7 +62,7 @@ Refresh checks run after tools and on user prompts. Unchanged text is suppressed
 Prepare an updated installation into a new output directory, point the local marketplace to that copy, and reinstall using the native plugin commands. Review the changed source and hooks before use. Verify discovery and a disposable compaction/tool cycle again. Keep the ledger separate from generated installation directories.
 
 ```bash
-codex plugin remove codex-research-campaign@campaign-manager
+codex plugin remove agent-campaign-manager@campaign-manager
 codex plugin marketplace remove campaign-manager
 ```
 

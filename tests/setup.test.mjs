@@ -43,11 +43,37 @@ test('Codex preparation creates a self-contained marketplace and server without 
   assert.equal(probe.status,0,probe.stderr);
   const tools=JSON.parse(probe.stdout).result.tools;
   assert.equal(tools.length,15);assert.ok(tools.some(t=>t.name==='campaign_context_hook'));
-  assert.equal(mcp.env.CODEX_RESEARCH_CAMPAIGN_STATE_DIR,state);
+  assert.equal(mcp.env.CAMPAIGN_STATE_DIR,state);assert.equal(mcp.env.CAMPAIGN_HARNESS,'codex');assert.equal(mcp.env.CAMPAIGN_CONTEXT_HOOKS,'1');
+  assert.equal(market.plugins[0].name,'agent-campaign-manager');
   const sentinel=join(out,'operator-note.txt');await writeFile(sentinel,'preserve');
   const duplicate=run(['codex','--state-dir',state,'--output',out]);
   assert.notEqual(duplicate.status,0,'Never silently overwrite an installation');
   assert.equal(await readFile(sentinel,'utf8'),'preserve');
+}));
+
+test('Claude Code preparation creates a plugin marketplace, per-process hook server and Claude hooks', async () => fixture(async dir => {
+  const state=join(dir,'state');assert.equal(run(['init','--state-dir',state]).status,0);
+  const out=join(dir,'claude');const result=run(['claude','--state-dir',state,'--output',out]);
+  assert.equal(result.status,0,result.stderr);
+  const market=await json(join(out,'.claude-plugin/marketplace.json'));
+  assert.equal(market.plugins[0].name,'agent-campaign-manager');assert.equal(market.plugins[0].source,'./plugin');
+  const manifest=await json(join(out,'plugin/.claude-plugin/plugin.json'));
+  assert.equal(manifest.name,'agent-campaign-manager');
+  const mcp=(await json(join(out,'plugin/.mcp.json'))).mcpServers['research-campaign'];
+  assert.deepEqual(mcp.env,{CAMPAIGN_HARNESS:'claude',CAMPAIGN_CONTEXT_HOOKS:'1',CAMPAIGN_STATE_DIR:state});
+  assert.equal(mcp.args[0],'${CLAUDE_PLUGIN_ROOT}/packages/mcp-server/src/server.mjs');
+  const args=mcp.args.map(a=>a.replace('${CLAUDE_PLUGIN_ROOT}',join(out,'plugin')));
+  const probe=spawnSync(mcp.command,args,{env:{...process.env,...mcp.env},input:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/list'})+'\n',encoding:'utf8'});
+  assert.equal(probe.status,0,probe.stderr);
+  assert.ok(JSON.parse(probe.stdout).result.tools.some(t=>t.name==='campaign_context_hook'));
+  const hooks=(await json(join(out,'plugin/hooks/hooks.json'))).hooks;
+  for (const event of ['SessionStart','PostToolUse','UserPromptSubmit']) {
+    const handler=hooks[event][0].hooks[0];
+    assert.equal(handler.type,'mcp_tool');assert.equal(handler.server,'plugin:agent-campaign-manager:research-campaign');
+    assert.equal(handler.tool,'campaign_context_hook');assert.equal(handler.input.event,event);
+  }
+  assert.equal(hooks.SessionStart[0].matcher,'compact');
+  assert.notEqual(run(['claude','--state-dir',state,'--output',out]).status,0,'Never silently overwrite an installation');
 }));
 
 test('Hermes preparation generates an untrusted hidden router and profile-specific MCP grant', async () => fixture(async dir => {

@@ -11,11 +11,11 @@ const usage = `campaign-manager ${packageJson.version}
 
 Usage:
   campaign-manager init [--state-dir <absolute-path>]
-  campaign-manager prepare <codex|hermes> [--state-dir <absolute-path>] [--output <absolute-path>] [--hermes-home <absolute-path>]
+  campaign-manager prepare <codex|claude|hermes> [--state-dir <absolute-path>] [--output <absolute-path>] [--hermes-home <absolute-path>]
   campaign-manager dashboard [--state-dir <absolute-path>] [--port <0-65535>] [--projects <json-file>]
   campaign-manager --version
 
-State defaults to CODEX_RESEARCH_CAMPAIGN_STATE_DIR, then XDG_STATE_HOME/omo-research,
+State defaults to CAMPAIGN_STATE_DIR (legacy alias CODEX_RESEARCH_CAMPAIGN_STATE_DIR), then XDG_STATE_HOME/omo-research,
 then ~/.local/state/omo-research. Initialization is explicit; dashboard never creates state.
 Preparation writes reviewable files in a per-user data directory and never edits client config.
 `;
@@ -119,7 +119,7 @@ async function main(argv) {
   }
   if (command === 'prepare') {
     const [client, ...optionArgs] = args;
-    if (!['codex', 'hermes'].includes(client)) throw new Error(`Choose a client: codex or hermes.\n${usage}`);
+    if (!['codex', 'claude', 'hermes'].includes(client)) throw new Error(`Choose a client: codex, claude or hermes.\n${usage}`);
     const options = parseOptions(optionArgs, ['--state-dir', '--output', '--hermes-home']);
     if (client !== 'hermes' && options['--hermes-home']) throw new Error('--hermes-home is only valid with prepare hermes.');
     runSetup(client, undefined, options, stateDirectory(options));
